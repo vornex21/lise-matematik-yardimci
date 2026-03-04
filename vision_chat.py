@@ -6,9 +6,8 @@ import shutil
 
 from pylatexenc.latex2text import LatexNodes2Text
 
-# API anahtarı (alt tire ile yazılacak, tire (-) olmayacak)
-openai.api_key = "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"
-
+import streamlit as st
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 # buradan sonrası sınıf ve fonksiyonlar
 def encode_image(image_path):
     with open(image_path, "rb") as f:
@@ -101,4 +100,5 @@ class VisionChatWithMemory:
             self.messages = self.messages[-20:]
 
         self.save_history()
+
         return answer
