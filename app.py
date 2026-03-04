@@ -5,6 +5,12 @@ from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 
+import streamlit as st
+
+import tempfile
+log_dir = tempfile.mkdtemp(prefix="vision_chat_")
+
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 # Log klasörü masaüstünde
 desktop = os.path.join(os.path.expanduser("~"), "Desktop")
 log_dir = os.path.join(desktop, "VisionChatHistory")
@@ -13,9 +19,9 @@ log_dir = os.path.join(desktop, "VisionChatHistory")
 chat = VisionChatWithMemory(log_dir=log_dir)
 
 # Streamlit arayüz ayarları
-st.set_page_config(page_title="📚 Lise Matematik Yardımcısı", layout="centered")
-st.title("📚 Lise Matematik Yardımcısı")
-st.markdown("Bir matematik sorusu yazın veya görselini yükleyin. Yapay zeka çözmeye çalışacaktır.")
+st.set_page_config(page_title="📚 Lise Matematik Yardımcısı📊", layout="centered")
+st.title("📚​ Lise Matematik Yardımcısı​📊​")
+st.markdown("Bir matematik sorusu yazın veya görselini yükleyin. Yapay zeka çözmeye çalışacaktır 😊​.")
 
 # Session state başlatma
 if "question" not in st.session_state:
@@ -50,8 +56,8 @@ with col1:
                     st.markdown(LatexNodes2Text().latex_to_text(answer))
                 except Exception as e:
                     st.error(f"Hata oluştu: {str(e)}")
-
 with col2:
     if st.button("Temizle"):
         st.session_state.clear()
+
         st.rerun()
