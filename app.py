@@ -59,3 +59,10 @@ with col2:
     if st.button("Temizle"):
         st.session_state.clear()
         st.rerun()  # Doğru syntax, parantez boş
+
+# Sayfanın üstüne 2 resim yan yana ekle
+col_img1, col_img2 = st.columns(2)
+with col_img1:
+    st.image("images/matematik-tahtasi.jpg", caption="Matematik keyifli olabilir!", use_column_width=True)
+with col_img2:
+    st.image("images/formuller.png", caption="Birlikte çözeceğiz!", use_column_width=True)
