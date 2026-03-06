@@ -44,19 +44,34 @@ st.image(
     "https://images.unsplash.com/photo-1509228627929-8243eb4676d2?auto=format&fit=crop&q=80&w=2000",
     use_column_width=True
 )
-st.markdown("<h1 style='text-align: center;'>Lise Matematik Yardımcısı</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.3rem;'>Birlikte her soruyu çözeriz! 🚀</p>", unsafe_allow_html=True)
-
-# Yanlara küçük resimler
-col_left, col_mid, col_right = st.columns([1, 4, 1])
-with col_left:
-    st.image("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400", width=150)
-with col_right:
-    st.image("https://images.unsplash.com/photo-1581092160560-1c1d2b2e3e1c?auto=format&fit=crop&q=80&w=400", width=150)
-
-# Ana içerik
-st.markdown("---")
-
+# Arka plan gri, yazılar beyaz olsun (koyu tema)
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #2d3748;  /* Koyu gri arka plan */
+            color: #f7fafc;             /* Yazılar beyaz */
+        }
+        .stTextInput > div > div > input,
+        .stFileUploader > div,
+        .stButton > button {
+            background-color: #4a5568;  /* Kutular ve butonlar biraz daha açık gri */
+            color: white;
+            border: 1px solid #718096;
+        }
+        .stButton > button:hover {
+            background-color: #718096;  /* Buton hover rengi */
+        }
+        h1, h2, h3, h4, h5, h6, p, div, span, label {
+            color: #f7fafc !important;  /* Tüm yazılar beyaz olsun */
+        }
+        .stWarning, .stError, .stSuccess {
+            color: #f7fafc !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # Session state
 if "question" not in st.session_state:
     st.session_state.question = ""
@@ -101,3 +116,4 @@ st.image(
     caption="Başarı seninle! 🌟",
     use_column_width=True
 )
+
