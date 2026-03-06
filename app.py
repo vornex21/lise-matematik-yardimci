@@ -1,4 +1,4 @@
-import openai
+illimport openai
 import streamlit as st
 import os
 from PIL import Image
@@ -53,7 +53,7 @@ st.markdown(
 st.set_page_config(page_title="Lise Matematik Yardımcısı 📚", layout="wide")
 
 # Üstte büyük motivasyonel resim (GitHub'a yüklediğin resmi kullan)
-st.image("tahta.jpg", use_column_width=True)  # ← Repo'da tahta.jpg varsa
+st.image("yazı tahtası", use_column_width=True)  # ← Repo'da tahta.jpg varsa
 
 st.markdown("<h1 style='text-align: center;'>Lise Matematik Yardımcısı</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.3rem;'>Birlikte her soruyu çözeriz! 🚀</p>", unsafe_allow_html=True)
@@ -61,9 +61,9 @@ st.markdown("<p style='text-align: center; font-size: 1.3rem;'>Birlikte her soru
 # Yanlara küçük resimler (repo'dan)
 col_left, col_mid, col_right = st.columns([1, 4, 1])
 with col_left:
-    st.image("formul.png", width=150)  # ← Repo'da formul.png varsa
+    st.image("şekiller", width=150)  # ← Repo'da formul.png varsa
 with col_right:
-    st.image("motivasyon.jpg", width=150)  # ← Repo'da motivasyon.jpg varsa
+    st.image("pi", width=150)  # ← Repo'da motivasyon.jpg varsa
 
 st.markdown("---")
 
@@ -119,3 +119,4 @@ st.markdown("<p style='text-align: center; font-size: 1.1rem;'>"
 st.markdown("<p style='text-align: center; font-size: 0.9rem; color: #a0aec0;'>"
             "Yapay zeka ile hazırlanmıştır • Soru sor, birlikte öğrenelim!</p>", 
             unsafe_allow_html=True)
+
