@@ -1,4 +1,4 @@
-import openai  # ← Bu satır zorunlu, NameError hatasını çözer
+import openai  # NameError hatasını çözer
 import streamlit as st
 import os
 from PIL import Image
@@ -7,9 +7,9 @@ from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
 
 # API anahtarı (Streamlit Secrets'ten çekiliyor)
-openai.api_key = st.secrets["OPENAI_API_KEY"]  # ← Bu satırın doğru konumu burası
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# Log klasörü (Streamlit Cloud için geçici klasör kullanıyoruz)
+# Log klasörü (Cloud için geçici klasör kullanıyoruz)
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 
 # Chat nesnesini başlat
@@ -17,6 +17,7 @@ chat = VisionChatWithMemory(log_dir=log_dir)
 
 # Streamlit arayüz ayarları
 st.set_page_config(page_title="📚 Lise Matematik Yardımcısı 📊", layout="centered")
+
 st.title("📚 Lise Matematik Yardımcısı 📊")
 st.markdown("Bir matematik sorusu yazın veya görselini yükleyin. Yapay zeka çözmeye çalışacaktır 😊.")
 
@@ -54,7 +55,7 @@ with col1:
                 except Exception as e:
                     st.error(f"Hata oluştu: {str(e)}")
 
-    with col2:
+with col2:
     if st.button("Temizle"):
         st.session_state.clear()
-        st.rerun()  # ← sadece bu şekilde olmalı, parantez boş
+        st.rerun()  # Doğru syntax, parantez boş
