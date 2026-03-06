@@ -1,4 +1,4 @@
-illimport openai
+import openai
 import streamlit as st
 import os
 from PIL import Image
@@ -36,34 +36,28 @@ st.markdown(
         h1, h2, h3, p, div, span, label, .stWarning, .stError, .stSuccess {
             color: #ffffff !important;
         }
-        /* Streamlit'in beyaz başlık çubuğunu gizle */
         header, [data-testid="stHeader"] {
             background-color: #000000 !important;
-        }
-        /* Genel okunabilirlik için */
-        .stMarkdown {
-            color: #ffffff !important;
         }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Sayfa başlığı
+# Sayfa başlığı ve üst resim (pi dairesi)
 st.set_page_config(page_title="Lise Matematik Yardımcısı 📚", layout="wide")
 
-# Üstte büyük motivasyonel resim (GitHub'a yüklediğin resmi kullan)
-st.image("yazı tahtası", use_column_width=True)  # ← Repo'da tahta.jpg varsa
+st.image("pi", use_column_width=True)  # ← Birinci resim (pi)
 
 st.markdown("<h1 style='text-align: center;'>Lise Matematik Yardımcısı</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.3rem;'>Birlikte her soruyu çözeriz! 🚀</p>", unsafe_allow_html=True)
 
-# Yanlara küçük resimler (repo'dan)
+# Yanlara küçük resimler (sekiller ve yazitahtasi)
 col_left, col_mid, col_right = st.columns([1, 4, 1])
 with col_left:
-    st.image("şekiller", width=150)  # ← Repo'da formul.png varsa
+    st.image("şekiller", width=150)  # ← İkinci resim (düğümler/şekiller)
 with col_right:
-    st.image("pi", width=150)  # ← Repo'da motivasyon.jpg varsa
+    st.image("yazı tahtası", width=150)  # ← Üçüncü resim (tahta)
 
 st.markdown("---")
 
@@ -108,15 +102,12 @@ with col2:
         st.session_state.clear()
         st.rerun()
 
-# Alt kısım – motive edici resim ve yazı
+# Alt kısım – motive edici yazı
 st.markdown("---")
-st.image("tahta.jpg", caption="Her soru bir zaferdir – devam et! 💪", use_column_width=True)
-
 st.markdown("<p style='text-align: center; font-size: 1.1rem;'>"
-            "Matematik zor değil, sadece doğru bakış açısı lazım. Sen başaracaksın! 🌟</p>", 
+            "Her soru bir zaferdir – devam et! 💪</p>", 
             unsafe_allow_html=True)
 
 st.markdown("<p style='text-align: center; font-size: 0.9rem; color: #a0aec0;'>"
             "Yapay zeka ile hazırlanmıştır • Soru sor, birlikte öğrenelim!</p>", 
             unsafe_allow_html=True)
-
