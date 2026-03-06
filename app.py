@@ -6,30 +6,43 @@ from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
 
-# API anahtarı
+# API anahtarı (Secrets'ten çekiliyor)
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# Log klasörü
+# Log klasörü (Cloud için geçici)
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 
-# Chat başlat
+# Chat nesnesini başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# CSS ile arka plan ve stil
+# Tam siyah arka plan + beyaz yazılar + kontrastlı stil
 st.markdown(
     """
     <style>
         .stApp {
-            background-color: #f0f4f8;  /* Açık mavi-gri arka plan */
-            background-image: linear-gradient(to bottom right, #e0f2fe, #f0f9ff);
+            background-color: #000000;  /* Tam siyah arka plan */
+            color: #ffffff;             /* Tüm yazılar beyaz */
         }
+        .stTextInput > div > div > input,
+        .stFileUploader > div,
         .stButton > button {
-            background-color: #3b82f6;
-            color: white;
-            border-radius: 8px;
+            background-color: #1a1a1a;  /* Koyu gri kutular */
+            color: #ffffff;
+            border: 1px solid #4a5568;
         }
-        h1, h2, h3 {
-            color: #1d4ed8;
+        .stButton > button:hover {
+            background-color: #2d3748;
+        }
+        h1, h2, h3, p, div, span, label, .stWarning, .stError, .stSuccess {
+            color: #ffffff !important;
+        }
+        /* Streamlit'in beyaz başlık çubuğunu gizle */
+        header, [data-testid="stHeader"] {
+            background-color: #000000 !important;
+        }
+        /* Genel okunabilirlik için */
+        .stMarkdown {
+            color: #ffffff !important;
         }
     </style>
     """,
@@ -39,39 +52,21 @@ st.markdown(
 # Sayfa başlığı
 st.set_page_config(page_title="Lise Matematik Yardımcısı 📚", layout="wide")
 
-# Üstte büyük resim + yazı
-st.image(
-    "https://images.unsplash.com/photo-1509228627929-8243eb4676d2?auto=format&fit=crop&q=80&w=2000",
-    use_column_width=True
-)
-# Arka plan gri, yazılar beyaz olsun (koyu tema)
-st.markdown(
-    """
-    <style>
-        .stApp {
-            background-color: #2d3748;  /* Koyu gri arka plan */
-            color: #f7fafc;             /* Yazılar beyaz */
-        }
-        .stTextInput > div > div > input,
-        .stFileUploader > div,
-        .stButton > button {
-            background-color: #4a5568;  /* Kutular ve butonlar biraz daha açık gri */
-            color: white;
-            border: 1px solid #718096;
-        }
-        .stButton > button:hover {
-            background-color: #718096;  /* Buton hover rengi */
-        }
-        h1, h2, h3, h4, h5, h6, p, div, span, label {
-            color: #f7fafc !important;  /* Tüm yazılar beyaz olsun */
-        }
-        .stWarning, .stError, .stSuccess {
-            color: #f7fafc !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Üstte büyük motivasyonel resim (GitHub'a yüklediğin resmi kullan)
+st.image("tahta.jpg", use_column_width=True)  # ← Repo'da tahta.jpg varsa
+
+st.markdown("<h1 style='text-align: center;'>Lise Matematik Yardımcısı</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 1.3rem;'>Birlikte her soruyu çözeriz! 🚀</p>", unsafe_allow_html=True)
+
+# Yanlara küçük resimler (repo'dan)
+col_left, col_mid, col_right = st.columns([1, 4, 1])
+with col_left:
+    st.image("formul.png", width=150)  # ← Repo'da formul.png varsa
+with col_right:
+    st.image("motivasyon.jpg", width=150)  # ← Repo'da motivasyon.jpg varsa
+
+st.markdown("---")
+
 # Session state
 if "question" not in st.session_state:
     st.session_state.question = ""
@@ -79,41 +74,48 @@ if "uploaded_image" not in st.session_state:
     st.session_state.uploaded_image = None
 
 # Girişler
-st.session_state.question = st.text_input("Sorunuz:", value=st.session_state.question)
-uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
+st.session_state.question = st.text_input("**Sorunuzu buraya yazın**", 
+                                          value=st.session_state.question, 
+                                          placeholder="Örn: 2x + 5 = 13 çöz")
+
+uploaded_image = st.file_uploader("**Soru görselini yükle (isteğe bağlı)**", type=["png", "jpg", "jpeg"])
 
 image = None
-if uploaded_image:
+if uploaded_image is not None:
     st.session_state.uploaded_image = uploaded_image
     image = Image.open(uploaded_image)
-    st.image(image, caption="Yüklenen Görsel", use_column_width=True)
+    st.image(image, caption="**Yüklenen Görsel**", use_column_width=True)
 
 # Butonlar
 col1, col2 = st.columns(2)
+
 with col1:
-    if st.button("Soruyu Çöz"):
+    if st.button("**Soruyu Çöz**", type="primary"):
         if not st.session_state.question.strip() and image is None:
             st.warning("Lütfen soru yazın veya görsel yükleyin.")
         else:
-            with st.spinner("Düşünüyor..."):
+            with st.spinner("Düşünüyor... 🤔"):
                 try:
                     answer = chat.ask_new_question(st.session_state.question, image=image)
-                    st.subheader("Cevap")
+                    st.subheader("**Cevap**")
                     st.markdown(LatexNodes2Text().latex_to_text(answer))
+                    st.success("Harika! Başka soru var mı? 😄")
                 except Exception as e:
                     st.error(f"Hata: {str(e)}")
 
 with col2:
-    if st.button("Temizle"):
+    if st.button("**Temizle**"):
         st.session_state.clear()
         st.rerun()
 
-# Alt kısım
+# Alt kısım – motive edici resim ve yazı
 st.markdown("---")
-st.markdown("<p style='text-align: center; font-size: 1.1rem;'>Her soru bir zaferdir – devam et! 💪</p>", unsafe_allow_html=True)
-st.image(
-    "https://images.unsplash.com/photo-1516979187457-637a1ec45b07?auto=format&fit=crop&q=80&w=1000",
-    caption="Başarı seninle! 🌟",
-    use_column_width=True
-)
+st.image("tahta.jpg", caption="Her soru bir zaferdir – devam et! 💪", use_column_width=True)
 
+st.markdown("<p style='text-align: center; font-size: 1.1rem;'>"
+            "Matematik zor değil, sadece doğru bakış açısı lazım. Sen başaracaksın! 🌟</p>", 
+            unsafe_allow_html=True)
+
+st.markdown("<p style='text-align: center; font-size: 0.9rem; color: #a0aec0;'>"
+            "Yapay zeka ile hazırlanmıştır • Soru sor, birlikte öğrenelim!</p>", 
+            unsafe_allow_html=True)
