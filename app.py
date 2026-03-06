@@ -54,8 +54,7 @@ with col1:
                 except Exception as e:
                     st.error(f"Hata oluştu: {str(e)}")
 
-with col2:
+    with col2:
     if st.button("Temizle"):
         st.session_state.clear()
-        st.rerun()s
-
+        st.rerun()  # ← sadece bu şekilde olmalı, parantez boş
