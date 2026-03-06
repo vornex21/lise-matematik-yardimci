@@ -47,7 +47,7 @@ st.markdown(
 # Sayfa başlığı ve üst resim (pi dairesi)
 st.set_page_config(page_title="Lise Matematik Yardımcısı 📚", layout="wide")
 
-st.image("pi", use_column_width=True)  # ← Birinci resim (pi)
+st.image("pi sayısı", use_column_width=True)  # ← Birinci resim (pi)
 
 st.markdown("<h1 style='text-align: center;'>Lise Matematik Yardımcısı</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.3rem;'>Birlikte her soruyu çözeriz! 🚀</p>", unsafe_allow_html=True)
@@ -111,3 +111,4 @@ st.markdown("<p style='text-align: center; font-size: 1.1rem;'>"
 st.markdown("<p style='text-align: center; font-size: 0.9rem; color: #a0aec0;'>"
             "Yapay zeka ile hazırlanmıştır • Soru sor, birlikte öğrenelim!</p>", 
             unsafe_allow_html=True)
+
