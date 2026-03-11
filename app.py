@@ -15,9 +15,13 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Koyu gri arka plan + beyaz yazı (önceki stil korunuyor)
-st.markdown(
-    """
+# Tema seçimi (sidebar’da)
+st.sidebar.title("Tema Ayarı")
+dark_mode = st.sidebar.checkbox("Karanlık Mod", value=True)  # Varsayılan koyu mod
+
+# Tema stilini uygula
+if dark_mode:
+    theme_css = """
     <style>
         .stApp { background-color: #1f2937; color: #f3f4f6; }
         .stTextInput > div > div > input,
@@ -25,13 +29,29 @@ st.markdown(
         .stFileUploader > div {
             background-color: #374151; color: #f3f4f6; border: 1px solid #4b5563;
         }
-        .stButton > button { background-color: #4f46e5; color: white; border: none; }
+        .stButton > button { background-color: #4f46e5; color: white; }
         .stButton > button:hover { background-color: #6366f1; }
         h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
+        header { background-color: #1f2937 !important; }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+    """
+else:
+    theme_css = """
+    <style>
+        .stApp { background-color: #ffffff; color: #111827; }
+        .stTextInput > div > div > input,
+        .stTextArea > div > div > textarea,
+        .stFileUploader > div {
+            background-color: #f9fafb; color: #111827; border: 1px solid #d1d5db;
+        }
+        .stButton > button { background-color: #3b82f6; color: white; }
+        .stButton > button:hover { background-color: #2563eb; }
+        h1, h2, h3, p, div, label { color: #111827 !important; }
+        header { background-color: #ffffff !important; }
+    </style>
+    """
+
+st.markdown(theme_css, unsafe_allow_html=True)
 
 st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 
@@ -61,7 +81,7 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# “Soruyu Çöz” butonu (eski işlev, değişmedi)
+# “Soruyu Çöz” butonu
 if st.button("Soruyu Çöz", type="primary"):
     if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
