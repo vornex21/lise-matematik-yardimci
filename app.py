@@ -1,7 +1,6 @@
 import openai
 import streamlit as st
 import os
-from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
@@ -15,48 +14,85 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Tema seçimi (sidebar’da)
-st.sidebar.title("Tema Ayarı")
-dark_mode = st.sidebar.checkbox("Karanlık Mod", value=True)  # Varsayılan koyu mod
+# Tema seçimi (session_state ile kalıcı olsun)
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True  # varsayılan koyu mod
 
 # Tema stilini uygula
-if dark_mode:
-    theme_css = """
-    <style>
-        .stApp { background-color: #1f2937; color: #f3f4f6; }
-        .stTextInput > div > div > input,
-        .stTextArea > div > div > textarea,
-        .stFileUploader > div {
-            background-color: #374151; color: #f3f4f6; border: 1px solid #4b5563;
-        }
-        .stButton > button { background-color: #4f46e5; color: white; }
-        .stButton > button:hover { background-color: #6366f1; }
-        h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
-        header { background-color: #1f2937 !important; }
-    </style>
-    """
+if st.session_state.dark_mode:
+    st.markdown(
+        """
+        <style>
+            .stApp { background-color: #1f2937; color: #f3f4f6; }
+            .stTextInput > div > div > input,
+            .stTextArea > div > div > textarea,
+            .stFileUploader > div {
+                background-color: #374151; color: #f3f4f6; border: 1px solid #4b5563;
+            }
+            .stButton > button { background-color: #4f46e5; color: white; }
+            .stButton > button:hover { background-color: #6366f1; }
+            h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
+            header { background-color: #1f2937 !important; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 else:
-    theme_css = """
-    <style>
-        .stApp { background-color: #ffffff; color: #111827; }
-        .stTextInput > div > div > input,
-        .stTextArea > div > div > textarea,
-        .stFileUploader > div {
-            background-color: #f9fafb; color: #111827; border: 1px solid #d1d5db;
-        }
-        .stButton > button { background-color: #3b82f6; color: white; }
-        .stButton > button:hover { background-color: #2563eb; }
-        h1, h2, h3, p, div, label { color: #111827 !important; }
-        header { background-color: #ffffff !important; }
-    </style>
-    """
+    st.markdown(
+        """
+        <style>
+            .stApp { background-color: #ffffff; color: #111827; }
+            .stTextInput > div > div > input,
+            .stTextArea > div > div > textarea,
+            .stFileUploader > div {
+                background-color: #f9fafb; color: #111827; border: 1px solid #d1d5db;
+            }
+            .stButton > button { background-color: #3b82f6; color: white; }
+            .stButton > button:hover { background-color: #2563eb; }
+            h1, h2, h3, p, div, label { color: #111827 !important; }
+            header { background-color: #ffffff !important; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-st.markdown(theme_css, unsafe_allow_html=True)
+# Sağ üst köşede küçük yuvarlak tema değiştirme butonu (sadece emoji)
+st.markdown(
+    """
+    <style>
+        .theme-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Buton (emoji moduna göre değişir)
+if st.button("🌙" if st.session_state.dark_mode else "☀️", 
+             key="theme_btn", 
+             help="Tema değiştir", 
+             use_container_width=False):
+    st.session_state.dark_mode = not st.session_state.dark_mode
+    st.rerun()
 
 st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 
 st.title("Lise Matematik Yardımcısı")
-st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
+st.markdown("🔥 Sor, çöz, kazan!")
 
 # Session state
 if "question" not in st.session_state:
