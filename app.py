@@ -15,7 +15,7 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Koyu gri arka plan + beyaz yazı
+# Koyu gri arka plan + beyaz yazı (önceki stil korunuyor)
 st.markdown(
     """
     <style>
@@ -33,10 +33,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.set_page_config(page_title="Akıllı Matematik Rehberi", layout="centered")
+st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 
-st.title("Akıllı Matematik Rehberi")
-st.markdown("🔥 Sor, çöz, kazan! | 🧠 Cevabını kontrol ettir!")
+st.title("Lise Matematik Yardımcısı")
+st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
 # Session state
 if "question" not in st.session_state:
@@ -49,7 +49,10 @@ if "control_result" not in st.session_state:
     st.session_state.control_result = None
 
 # Soru girişi
-st.session_state.question = st.text_input("Sorunuzu buraya yazın", value=st.session_state.question)
+st.session_state.question = st.text_input("Sorunuzu buraya yazın", 
+                                          value=st.session_state.question,
+                                          placeholder="Örn: 2x + 5 = 13 çöz")
+
 uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
 
 image = None
@@ -58,27 +61,39 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# Kullanıcının cevabı + kontrol butonu
-st.markdown("### Senin Cevabın")
-st.session_state.user_answer = st.text_area("Cevabını buraya yaz", 
-                                            value=st.session_state.user_answer, 
-                                            height=150,
+# “Soruyu Çöz” butonu (eski işlev, değişmedi)
+if st.button("Soruyu Çöz", type="primary"):
+    if not st.session_state.question.strip() and image is None:
+        st.warning("Lütfen soru yazın veya görsel yükleyin.")
+    else:
+        with st.spinner("Çözülüyor..."):
+            try:
+                answer = chat.ask_new_question(st.session_state.question, image=image)
+                st.subheader("Cevap")
+                st.markdown(LatexNodes2Text().latex_to_text(answer))
+            except Exception as e:
+                st.error(f"Hata: {str(e)}")
+
+# Opsiyonel: Cevap kontrol kısmı
+st.markdown("### İstersen kendi cevabını kontrol ettir")
+st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
+                                            value=st.session_state.user_answer,
+                                            height=100,
                                             placeholder="Örn: x = 4")
 
-if st.button("Cevabımı Kontrol Et", type="primary"):
+if st.button("Cevabımı Kontrol Et"):
     if not st.session_state.question.strip() and image is None:
-        st.warning("Lütfen önce soru yazın veya görsel yükleyin.")
+        st.warning("Önce soru yazın veya görsel yükleyin.")
     elif not st.session_state.user_answer.strip():
         st.warning("Cevabınızı yazmadınız!")
     else:
-        with st.spinner("Cevabını kontrol ediyorum... 🧐"):
+        with st.spinner("Cevabınızı kontrol ediyorum... 🧐"):
             try:
-                # GPT'ye soruyu + kullanıcının cevabını gönderiyoruz
                 prompt = f"""
                 Soru: {st.session_state.question}
                 Kullanıcının cevabı: {st.session_state.user_answer}
 
-                Bu cevap doğru mu? 
+                Bu cevap doğru mu?
                 - Doğruysa tebrik et ve kısa bir açıklama yap.
                 - Yanlışsa neden yanlış olduğunu net bir şekilde açıkla.
                 - Matematiksel ifadeleri LaTeX formatında tut.
@@ -88,14 +103,14 @@ if st.button("Cevabımı Kontrol Et", type="primary"):
                 response = openai.chat.completions.create(
                     model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
-                    max_tokens=500
+                    max_tokens=400
                 )
                 
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
                 
             except Exception as e:
-                st.error(f"Kontrol sırasında hata: {str(e)}")
+                st.error(f"Kontrol hatası: {str(e)}")
 
 # Kontrol sonucunu göster
 if st.session_state.control_result:
@@ -109,5 +124,4 @@ if st.button("Tümünü Temizle"):
 
 # Alt motivasyon
 st.markdown("---")
-st.markdown("<p style='text-align: center; font-size: 1.1rem;'>"
-            "🔥 Her kontrol seni bir adım ileriye taşır!</p>", unsafe_allow_html=True)
+st.markdown("Her soru bir zaferdir – devam et! 💪")
