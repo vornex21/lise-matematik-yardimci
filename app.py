@@ -15,93 +15,99 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Koyu gri arka plan + beyaz yazı (önceki stilin korunması)
+# Koyu gri arka plan + beyaz yazı
 st.markdown(
     """
     <style>
-        .stApp {
-            background-color: #1f2937;
-            color: #f3f4f6;
-        }
+        .stApp { background-color: #1f2937; color: #f3f4f6; }
         .stTextInput > div > div > input,
-        .stFileUploader > div,
-        .stButton > button {
-            background-color: #374151;
-            color: #f3f4f6;
-            border: 1px solid #4b5563;
+        .stTextArea > div > div > textarea,
+        .stFileUploader > div {
+            background-color: #374151; color: #f3f4f6; border: 1px solid #4b5563;
         }
-        .stButton > button:hover {
-            background-color: #4f46e5;
-        }
-        h1, h2, h3, p, div, label {
-            color: #f3f4f6 !important;
-        }
+        .stButton > button { background-color: #4f46e5; color: white; border: none; }
+        .stButton > button:hover { background-color: #6366f1; }
+        h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
+st.set_page_config(page_title="Akıllı Matematik Rehberi", layout="centered")
 
-# Sekmeler oluştur
-tab1, tab2 = st.tabs(["Soru Çöz", "Analiz"])
+st.title("Akıllı Matematik Rehberi")
+st.markdown("🔥 Sor, çöz, kazan! | 🧠 Cevabını kontrol ettir!")
 
-with tab1:
-    st.title("Soru Çöz")
-    st.markdown("🔥 Sor, çöz, kazan!")
+# Session state
+if "question" not in st.session_state:
+    st.session_state.question = ""
+if "uploaded_image" not in st.session_state:
+    st.session_state.uploaded_image = None
+if "user_answer" not in st.session_state:
+    st.session_state.user_answer = ""
+if "control_result" not in st.session_state:
+    st.session_state.control_result = None
 
-    # Session state (sadece bu sekme için)
-    if "question" not in st.session_state:
-        st.session_state.question = ""
-    if "uploaded_image" not in st.session_state:
-        st.session_state.uploaded_image = None
+# Soru girişi
+st.session_state.question = st.text_input("Sorunuzu buraya yazın", value=st.session_state.question)
+uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
 
-    st.session_state.question = st.text_input("Sorunuzu buraya yazın", value=st.session_state.question)
-    uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
+image = None
+if uploaded_image is not None:
+    st.session_state.uploaded_image = uploaded_image
+    image = Image.open(uploaded_image)
+    st.image(image, caption="Yüklenen Görsel")
 
-    image = None
-    if uploaded_image:
-        st.session_state.uploaded_image = uploaded_image
-        image = Image.open(uploaded_image)
-        st.image(image, caption="Yüklenen Görsel")
+# Kullanıcının cevabı + kontrol butonu
+st.markdown("### Senin Cevabın")
+st.session_state.user_answer = st.text_area("Cevabını buraya yaz", 
+                                            value=st.session_state.user_answer, 
+                                            height=150,
+                                            placeholder="Örn: x = 4")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Soruyu Çöz"):
-            if not st.session_state.question.strip() and image is None:
-                st.warning("Lütfen soru yazın veya görsel yükleyin.")
-            else:
-                with st.spinner("Düşünüyor... 🤔"):
-                    try:
-                        answer = chat.ask_new_question(st.session_state.question, image=image)
-                        st.subheader("Cevap")
-                        st.markdown(LatexNodes2Text().latex_to_text(answer))
-                    except Exception as e:
-                        st.error(f"Hata: {str(e)}")
+if st.button("Cevabımı Kontrol Et", type="primary"):
+    if not st.session_state.question.strip() and image is None:
+        st.warning("Lütfen önce soru yazın veya görsel yükleyin.")
+    elif not st.session_state.user_answer.strip():
+        st.warning("Cevabınızı yazmadınız!")
+    else:
+        with st.spinner("Cevabını kontrol ediyorum... 🧐"):
+            try:
+                # GPT'ye soruyu + kullanıcının cevabını gönderiyoruz
+                prompt = f"""
+                Soru: {st.session_state.question}
+                Kullanıcının cevabı: {st.session_state.user_answer}
 
-    with col2:
-        if st.button("Temizle"):
-            st.session_state.clear()
-            st.rerun()
+                Bu cevap doğru mu? 
+                - Doğruysa tebrik et ve kısa bir açıklama yap.
+                - Yanlışsa neden yanlış olduğunu net bir şekilde açıkla.
+                - Matematiksel ifadeleri LaTeX formatında tut.
+                Cevabı kısa ve net tut.
+                """
+                
+                response = openai.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=500
+                )
+                
+                result = response.choices[0].message.content
+                st.session_state.control_result = result
+                
+            except Exception as e:
+                st.error(f"Kontrol sırasında hata: {str(e)}")
 
-with tab2:
-    st.title("Analiz")
-    st.markdown("🧠 İstatistikler ve analizler burada! 📊")
+# Kontrol sonucunu göster
+if st.session_state.control_result:
+    st.subheader("Kontrol Sonucu")
+    st.markdown(st.session_state.control_result)
 
-    # Basit analiz örnekleri (gerçek verilerle genişletebilirsin)
-    st.markdown("**Son 5 soru istatistiği**")
-    st.markdown("Doğru cevap: 4/5 (80%)")
-    st.markdown("En çok çözülen konu: Denklem çözme")
-    st.markdown("En uzun süre düşündüğün soru: 45 saniye")
+# Temizle butonu
+if st.button("Tümünü Temizle"):
+    st.session_state.clear()
+    st.rerun()
 
-    # Motivasyon cümleleri (emoji ile)
-    st.markdown("🔥 Sen bu işi biliyorsun!")
-    st.markdown("🚀 Her soru seni daha güçlü yapıyor!")
-    st.markdown("💡 Bir sonraki zafer senin!")
-
-    # İleride buraya grafik ekleyebilirsin (örneğin matplotlib ile)
-    st.markdown("(İleride buraya başarı grafiği eklenebilir)")
-
-# Alt kısım (ortak motivasyon)
+# Alt motivasyon
 st.markdown("---")
-st.markdown("<p style='text-align: center; font-size: 1.1rem;'>Her soru bir zaferdir – devam et! 💪</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 1.1rem;'>"
+            "🔥 Her kontrol seni bir adım ileriye taşır!</p>", unsafe_allow_html=True)
