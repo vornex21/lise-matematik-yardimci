@@ -1,6 +1,7 @@
 import openai
 import streamlit as st
 import os
+from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
