@@ -1,12 +1,12 @@
 import openai
 import streamlit as st
 import os
-from PIL import Image   # ← BU SATIR EKLE
+from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
 import matplotlib.pyplot as plt
-# kalan import'lar...
+
 # API anahtarı
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
@@ -51,7 +51,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Tema değiştirme butonu (emoji moduna göre değişir)
+# Tema değiştirme butonu
 if st.button("🌙" if st.session_state.dark_mode else "☀️", 
              key="theme_btn", 
              help="Tema değiştir",
@@ -99,7 +99,7 @@ else:
 
 st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 
-st.title("Akıllı Matematik Rehberi")
+st.title("Lise Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
 # Sidebar istatistik
@@ -119,6 +119,16 @@ if st.session_state.total_attempts > 0:
     st.sidebar.pyplot(fig)
 else:
     st.sidebar.info("Henüz soru çözülmedi")
+
+# Session state güvenli başlatma
+if "question" not in st.session_state:
+    st.session_state.question = ""
+if "uploaded_image" not in st.session_state:
+    st.session_state.uploaded_image = None
+if "user_answer" not in st.session_state:
+    st.session_state.user_answer = ""
+if "control_result" not in st.session_state:
+    st.session_state.control_result = None
 
 # Soru girişi
 st.session_state.question = st.text_input("Sorunuzu buraya yazın", 
