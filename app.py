@@ -5,6 +5,7 @@ from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
+import matplotlib.pyplot as plt
 
 # API anahtarı
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -15,12 +16,18 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Tema seçimi (session_state ile kalıcı olsun)
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True  # varsayılan koyu mod
+# İstatistik için session_state (kalıcı olsun)
+if "total_attempts" not in st.session_state:
+    st.session_state.total_attempts = 0
+if "correct_answers" not in st.session_state:
+    st.session_state.correct_answers = 0
+
+# Tema seçimi (sidebar’da)
+st.sidebar.title("Ayarlar")
+dark_mode = st.sidebar.checkbox("Karanlık Mod", value=True)
 
 # Tema stilini uygula
-if st.session_state.dark_mode:
+if dark_mode:
     st.markdown(
         """
         <style>
@@ -57,43 +64,10 @@ else:
         unsafe_allow_html=True
     )
 
-# Sağ üst köşede küçük yuvarlak tema değiştirme butonu (sadece emoji)
-st.markdown(
-    """
-    <style>
-        .theme-toggle {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 9999;
-            background: transparent;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 50%;
-            transition: background 0.3s;
-        }
-        .theme-toggle:hover {
-            background: rgba(255,255,255,0.1);
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Buton (emoji moduna göre değişir)
-if st.button("🌙" if st.session_state.dark_mode else "☀️", 
-             key="theme_btn", 
-             help="Tema değiştir", 
-             use_container_width=False):
-    st.session_state.dark_mode = not st.session_state.dark_mode
-    st.rerun()
-
 st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 
 st.title("Lise Matematik Yardımcısı")
-st.markdown("🔥 Sor, çöz, kazan!")
+st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
 # Session state
 if "question" not in st.session_state:
@@ -104,6 +78,24 @@ if "user_answer" not in st.session_state:
     st.session_state.user_answer = ""
 if "control_result" not in st.session_state:
     st.session_state.control_result = None
+
+# Sidebar istatistik gösterimi
+st.sidebar.markdown("### Başarı İstatistiği")
+if st.session_state.total_attempts > 0:
+    success_rate = (st.session_state.correct_answers / st.session_state.total_attempts) * 100
+    st.sidebar.metric("Toplam Deneme", st.session_state.total_attempts)
+    st.sidebar.metric("Doğru Cevap", st.session_state.correct_answers)
+    st.sidebar.metric("Başarı Oranı", f"{success_rate:.1f}%")
+
+    # Basit çubuk grafik
+    fig, ax = plt.subplots(figsize=(4, 2))
+    ax.bar(["Doğru", "Yanlış"], 
+           [st.session_state.correct_answers, st.session_state.total_attempts - st.session_state.correct_answers],
+           color=["#22c55e", "#ef4444"])
+    ax.set_ylim(0, max(st.session_state.total_attempts, 1))
+    st.sidebar.pyplot(fig)
+else:
+    st.sidebar.info("Henüz soru çözülmedi")
 
 # Soru girişi
 st.session_state.question = st.text_input("Sorunuzu buraya yazın", 
@@ -165,6 +157,12 @@ if st.button("Cevabımı Kontrol Et"):
                 
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
+                
+                # İstatistiği güncelle (cevap kontrolü de deneme sayılır)
+                st.session_state.total_attempts += 1
+                # Doğru olup olmadığını basitçe kontrol et (daha akıllı olabilir)
+                if "doğru" in result.lower() or "tebrik" in result.lower():
+                    st.session_state.correct_answers += 1
                 
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
