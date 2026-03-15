@@ -1,11 +1,12 @@
 import openai
 import streamlit as st
 import os
+from PIL import Image   # ← BU SATIR EKLE
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
 import matplotlib.pyplot as plt
-
+# kalan import'lar...
 # API anahtarı
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
