@@ -56,9 +56,29 @@ if st.button("🌙" if st.session_state.dark_mode else "☀️",
 
 # Tema stili
 if st.session_state.dark_mode:
-    st.markdown("<style>.stApp { background-color: #1f2937; color: #f3f4f6; } .stTextInput input, .stTextArea textarea, .stFileUploader { background-color: #374151; color: #f3f4f6; } .stButton button { background-color: #4f46e5; } h1,h2,h3,p { color: #f3f4f6 !important; }</style>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <style>
+            .stApp { background-color: #1f2937; color: #f3f4f6; }
+            .stTextInput input, .stTextArea textarea, .stFileUploader { background-color: #374151; color: #f3f4f6; }
+            .stButton button { background-color: #4f46e5; }
+            h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 else:
-    st.markdown("<style>.stApp { background-color: #ffffff; color: #111827; } .stTextInput input, .stTextArea textarea, .stFileUploader { background-color: #f9fafb; color: #111827; } .stButton button { background-color: #3b82f6; } h1,h2,h3,p { color: #111827 !important; }</style>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <style>
+            .stApp { background-color: #ffffff; color: #111827; }
+            .stTextInput input, .stTextArea textarea, .stFileUploader { background-color: #f9fafb; color: #111827; }
+            .stButton button { background-color: #3b82f6; }
+            h1, h2, h3, p, div, label { color: #111827 !important; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 
@@ -82,10 +102,22 @@ if st.session_state.total_attempts > 0:
 else:
     st.sidebar.info("Henüz soru çözülmedi")
 
+# === GÜVENLİ SESSION STATE BAŞLATMA ===
+if "question" not in st.session_state:
+    st.session_state.question = ""
+if "uploaded_image" not in st.session_state:
+    st.session_state.uploaded_image = None
+if "user_answer" not in st.session_state:
+    st.session_state.user_answer = ""
+if "control_result" not in st.session_state:
+    st.session_state.control_result = None
+
 # Soru girişi
-st.session_state.question = st.text_input("Sorunuzu buraya yazın", 
-                                          value=st.session_state.question,
-                                          placeholder="Örn: 2x + 5 = 13 çöz")
+st.session_state.question = st.text_input(
+    "Sorunuzu buraya yazın",
+    value=st.session_state.question,
+    placeholder="Örn: 2x + 5 = 13 çöz"
+)
 
 uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
 
@@ -106,7 +138,7 @@ if st.button("Soruyu Çöz", type="primary"):
                 st.subheader("Cevap")
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
                 st.session_state.total_attempts += 1
-                st.session_state.correct_answers += 1   # Basitçe doğru kabul ediyoruz (daha akıllı hale getirilebilir)
+                st.session_state.correct_answers += 1
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
@@ -147,7 +179,7 @@ if st.button("Cevabımı Kontrol Et"):
                     st.session_state.correct_answers += 1
 
             except Exception as e:
-                st.error(f"Hata: {str(e)}")
+                st.error(f"Kontrol hatası: {str(e)}")
 
 if st.session_state.control_result:
     st.subheader("Kontrol Sonucu")
