@@ -102,7 +102,7 @@ if st.session_state.total_attempts > 0:
 else:
     st.sidebar.info("Henüz soru çözülmedi")
 
-# === GÜVENLİ SESSION STATE BAŞLATMA ===
+# Session state güvenli başlatma
 if "question" not in st.session_state:
     st.session_state.question = ""
 if "uploaded_image" not in st.session_state:
@@ -113,11 +113,9 @@ if "control_result" not in st.session_state:
     st.session_state.control_result = None
 
 # Soru girişi
-st.session_state.question = st.text_input(
-    "Sorunuzu buraya yazın",
-    value=st.session_state.question,
-    placeholder="Örn: 2x + 5 = 13 çöz"
-)
+st.session_state.question = st.text_input("Sorunuzu buraya yazın", 
+                                          value=st.session_state.question,
+                                          placeholder="Örn: 2x + 5 = 13 çöz")
 
 uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
 
@@ -138,11 +136,11 @@ if st.button("Soruyu Çöz", type="primary"):
                 st.subheader("Cevap")
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
                 st.session_state.total_attempts += 1
-                st.session_state.correct_answers += 1
+                st.session_state.correct_answers += 1   # AI çözümü her zaman doğru kabul ediyoruz
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
-# Kendi cevabını kontrol ettir
+# Opsiyonel: Kendi cevabını kontrol ettir
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
@@ -155,36 +153,41 @@ if st.button("Cevabımı Kontrol Et"):
     elif not st.session_state.user_answer.strip():
         st.warning("Cevabınızı yazmadınız!")
     else:
-        with st.spinner("Kontrol ediliyor... 🧐"):
+        with st.spinner("Cevabınızı kontrol ediyorum... 🧐"):
             try:
                 prompt = f"""
                 Soru: {st.session_state.question}
                 Kullanıcının cevabı: {st.session_state.user_answer}
 
-                Bu cevap doğru mu?
-                - Doğruysa tebrik et ve kısa açıklama yap.
-                - Yanlışsa neden yanlış olduğunu net açıkla.
-                Cevabı kısa tut.
+                Bu cevap doğru mu? 
+                - Doğruysa "DOĞRU" kelimesini kullanarak tebrik et.
+                - Yanlışsa "YANLIŞ" kelimesini kullanarak neden yanlış olduğunu net açıkla.
+                Cevabı kısa ve net tut.
                 """
+
                 response = openai.chat.completions.create(
                     model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=400
                 )
+                
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
 
+                # İstatistiği GÜNCELLE (gerçek kontrol)
                 st.session_state.total_attempts += 1
-                if "doğru" in result.lower() or "tebrik" in result.lower():
+                if "DOĞRU" in result.upper() or "TEBRİK" in result.upper():
                     st.session_state.correct_answers += 1
-
+                
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
 
+# Kontrol sonucunu göster
 if st.session_state.control_result:
     st.subheader("Kontrol Sonucu")
     st.markdown(st.session_state.control_result)
 
+# Temizle butonu
 if st.button("Tümünü Temizle"):
     st.session_state.clear()
     st.rerun()
