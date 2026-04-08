@@ -5,7 +5,6 @@ from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
-import matplotlib.pyplot as plt
 
 # API anahtarı
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -16,17 +15,11 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# İstatistik için session_state
-if "total_attempts" not in st.session_state:
-    st.session_state.total_attempts = 0
-if "correct_answers" not in st.session_state:
-    st.session_state.correct_answers = 0
-
-# Tema seçimi
+# Tema seçimi (session_state ile kalıcı)
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
-# Sağ üst tema butonu
+# Sağ üstte tema değiştirme butonu (sadece emoji)
 st.markdown(
     """
     <style>
@@ -41,8 +34,11 @@ st.markdown(
             cursor: pointer;
             padding: 8px 12px;
             border-radius: 50%;
+            transition: background 0.3s;
         }
-        .theme-toggle:hover { background: rgba(255,255,255,0.1); }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -60,9 +56,15 @@ if st.session_state.dark_mode:
         """
         <style>
             .stApp { background-color: #1f2937; color: #f3f4f6; }
-            .stTextInput input, .stTextArea textarea, .stFileUploader { background-color: #374151; color: #f3f4f6; }
-            .stButton button { background-color: #4f46e5; }
+            .stTextInput > div > div > input,
+            .stTextArea > div > div > textarea,
+            .stFileUploader > div {
+                background-color: #374151; color: #f3f4f6; border: 1px solid #4b5563;
+            }
+            .stButton > button { background-color: #4f46e5; color: white; }
+            .stButton > button:hover { background-color: #6366f1; }
             h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
+            header { background-color: #1f2937 !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -72,9 +74,15 @@ else:
         """
         <style>
             .stApp { background-color: #ffffff; color: #111827; }
-            .stTextInput input, .stTextArea textarea, .stFileUploader { background-color: #f9fafb; color: #111827; }
-            .stButton button { background-color: #3b82f6; }
+            .stTextInput > div > div > input,
+            .stTextArea > div > div > textarea,
+            .stFileUploader > div {
+                background-color: #f9fafb; color: #111827; border: 1px solid #d1d5db;
+            }
+            .stButton > button { background-color: #3b82f6; color: white; }
+            .stButton > button:hover { background-color: #2563eb; }
             h1, h2, h3, p, div, label { color: #111827 !important; }
+            header { background-color: #ffffff !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -85,24 +93,7 @@ st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
 st.title("Lise Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
-# Sidebar İstatistik
-st.sidebar.title("Başarı İstatistiği")
-if st.session_state.total_attempts > 0:
-    success_rate = (st.session_state.correct_answers / st.session_state.total_attempts) * 100
-    st.sidebar.metric("Toplam Deneme", st.session_state.total_attempts)
-    st.sidebar.metric("Doğru Cevap", st.session_state.correct_answers)
-    st.sidebar.metric("Başarı Oranı", f"{success_rate:.1f}%")
-
-    fig, ax = plt.subplots(figsize=(4, 2))
-    ax.bar(["Doğru", "Yanlış"], 
-           [st.session_state.correct_answers, st.session_state.total_attempts - st.session_state.correct_answers],
-           color=["#22c55e", "#ef4444"])
-    ax.set_ylim(0, max(st.session_state.total_attempts, 1))
-    st.sidebar.pyplot(fig)
-else:
-    st.sidebar.info("Henüz soru çözülmedi")
-
-# Session state güvenli başlatma
+# Güvenli Session State başlatma
 if "question" not in st.session_state:
     st.session_state.question = ""
 if "uploaded_image" not in st.session_state:
@@ -125,7 +116,7 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# Soruyu Çöz butonu
+# Soruyu Çöz butonu (eski işlev)
 if st.button("Soruyu Çöz", type="primary"):
     if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
@@ -135,8 +126,6 @@ if st.button("Soruyu Çöz", type="primary"):
                 answer = chat.ask_new_question(st.session_state.question, image=image)
                 st.subheader("Cevap")
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
-                st.session_state.total_attempts += 1
-                st.session_state.correct_answers += 1   # AI çözümü her zaman doğru kabul ediyoruz
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
@@ -159,9 +148,9 @@ if st.button("Cevabımı Kontrol Et"):
                 Soru: {st.session_state.question}
                 Kullanıcının cevabı: {st.session_state.user_answer}
 
-                Bu cevap doğru mu? 
-                - Doğruysa "DOĞRU" kelimesini kullanarak tebrik et.
-                - Yanlışsa "YANLIŞ" kelimesini kullanarak neden yanlış olduğunu net açıkla.
+                Bu cevap doğru mu?
+                - Doğruysa tebrik et ve kısa açıklama yap.
+                - Yanlışsa neden yanlış olduğunu net bir şekilde açıkla.
                 Cevabı kısa ve net tut.
                 """
 
@@ -173,11 +162,6 @@ if st.button("Cevabımı Kontrol Et"):
                 
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
-
-                # İstatistiği GÜNCELLE (gerçek kontrol)
-                st.session_state.total_attempts += 1
-                if "DOĞRU" in result.upper() or "TEBRİK" in result.upper():
-                    st.session_state.correct_answers += 1
                 
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
@@ -192,5 +176,6 @@ if st.button("Tümünü Temizle"):
     st.session_state.clear()
     st.rerun()
 
+# Alt motivasyon
 st.markdown("---")
 st.markdown("Her soru bir zaferdir – devam et! 💪")
