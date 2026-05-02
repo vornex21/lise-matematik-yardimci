@@ -15,11 +15,11 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Tema seçimi (varsayılan koyu mod)
+# Tema seçimi
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
-# Sağ üstte tema butonu (sadece emoji)
+# Sağ üst tema butonu
 st.markdown(
     """
     <style>
@@ -36,9 +36,7 @@ st.markdown(
             border-radius: 50%;
             transition: background 0.3s;
         }
-        .theme-toggle:hover {
-            background: rgba(255,255,255,0.1);
-        }
+        .theme-toggle:hover { background: rgba(255,255,255,0.1); }
     </style>
     """,
     unsafe_allow_html=True
@@ -50,35 +48,21 @@ if st.button("🌙" if st.session_state.dark_mode else "☀️",
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
-# Tema stili (daha koyu arka plan)
+# Tema stili
 if st.session_state.dark_mode:
     st.markdown(
         """
         <style>
-            .stApp { 
-                background-color: #0f172a;     /* Daha koyu gri-siyah */
-                color: #f3f4f6; 
-            }
+            .stApp { background-color: #0f172a; color: #f3f4f6; }
             .stTextInput > div > div > input,
             .stTextArea > div > div > textarea,
             .stFileUploader > div {
-                background-color: #1e2937; 
-                color: #f3f4f6; 
-                border: 1px solid #475569;
+                background-color: #1e2937; color: #f3f4f6; border: 1px solid #475569;
             }
-            .stButton > button { 
-                background-color: #4f46e5; 
-                color: white; 
-            }
-            .stButton > button:hover { 
-                background-color: #6366f1; 
-            }
-            h1, h2, h3, p, div, label { 
-                color: #f3f4f6 !important; 
-            }
-            header { 
-                background-color: #0f172a !important; 
-            }
+            .stButton > button { background-color: #4f46e5; color: white; }
+            .stButton > button:hover { background-color: #6366f1; }
+            h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
+            header { background-color: #0f172a !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -102,9 +86,9 @@ else:
         unsafe_allow_html=True
     )
 
-st.set_page_config(page_title="Lise Matematik Yardımcısı", layout="centered")
+st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="centered")
 
-st.title("Lise Matematik Yardımcısı")
+st.title("Akıllı Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
 # Güvenli Session State başlatma
@@ -143,7 +127,7 @@ if st.button("Soruyu Çöz", type="primary"):
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
-# Opsiyonel: Kendi cevabını kontrol ettir
+# Opsiyonel cevap kontrol
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
@@ -180,16 +164,13 @@ if st.button("Cevabımı Kontrol Et"):
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
 
-# Kontrol sonucunu göster
 if st.session_state.control_result:
     st.subheader("Kontrol Sonucu")
     st.markdown(st.session_state.control_result)
 
-# Temizle butonu
 if st.button("Tümünü Temizle"):
     st.session_state.clear()
     st.rerun()
 
-# Alt motivasyon
 st.markdown("---")
 st.markdown("Her soru bir zaferdir – devam et! 💪")
