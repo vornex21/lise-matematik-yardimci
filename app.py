@@ -91,7 +91,7 @@ st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="center
 st.title("Akıllı Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
-# Güvenli Session State başlatma
+# Güvenli Session State
 if "question" not in st.session_state:
     st.session_state.question = ""
 if "uploaded_image" not in st.session_state:
@@ -151,16 +151,13 @@ if st.button("Cevabımı Kontrol Et"):
                 - Yanlışsa neden yanlış olduğunu net açıkla.
                 Cevabı kısa tut.
                 """
-
                 response = openai.chat.completions.create(
                     model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=400
                 )
-                
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
-                
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
 
@@ -172,5 +169,16 @@ if st.button("Tümünü Temizle"):
     st.session_state.clear()
     st.rerun()
 
+# Alt kısım
 st.markdown("---")
-st.markdown("Her soru bir zaferdir – devam et! 💪")
+st.markdown("**Her soru bir zaferdir – devam et! 💪**")
+
+# Yeni uyarı cümlesi (kıvrımlı çizgi + açık gri + italik)
+st.markdown(
+    """
+    <p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 0.95rem; margin-top: 10px;">
+        ━━━ Bu AI alfa sürümündedir, hata yapabilir. ━━━
+    </p>
+    """,
+    unsafe_allow_html=True
+)
