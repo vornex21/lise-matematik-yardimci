@@ -5,6 +5,7 @@ from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
+from datetime import datetime, date
 
 # API anahtarı
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -15,7 +16,23 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Tema seçimi
+# ====================== GÜNLÜK STREAK SİSTEMİ ======================
+if "streak" not in st.session_state:
+    st.session_state.streak = 0
+if "last_used_date" not in st.session_state:
+    st.session_state.last_used_date = None
+
+today = date.today()
+
+# Bugün ilk kullanım mı kontrol et
+if st.session_state.last_used_date != today:
+    # Yeni gün başladı
+    if st.session_state.last_used_date is not None:
+        # Dün kullanıldıysa streak devam eder, kullanılmadıysa sıfırlanır
+        if (today - st.session_state.last_used_date).days > 1:
+            st.session_state.streak = 0  # Streak kırıldı
+
+# ====================== TEMA ======================
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
@@ -34,7 +51,6 @@ st.markdown(
             cursor: pointer;
             padding: 8px 12px;
             border-radius: 50%;
-            transition: background 0.3s;
         }
         .theme-toggle:hover { background: rgba(255,255,255,0.1); }
     </style>
@@ -62,7 +78,6 @@ if st.session_state.dark_mode:
             .stButton > button { background-color: #4f46e5; color: white; }
             .stButton > button:hover { background-color: #6366f1; }
             h1, h2, h3, p, div, label { color: #f3f4f6 !important; }
-            header { background-color: #0f172a !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -80,7 +95,6 @@ else:
             .stButton > button { background-color: #3b82f6; color: white; }
             .stButton > button:hover { background-color: #2563eb; }
             h1, h2, h3, p, div, label { color: #111827 !important; }
-            header { background-color: #ffffff !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -91,6 +105,16 @@ st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="center
 st.title("Akıllı Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
+# Sidebar - Streak Gösterimi
+st.sidebar.title("🔥 Günlük Streak")
+st.sidebar.metric("Mevcut Seri", f"{st.session_state.streak} gün")
+
+if st.session_state.streak >= 1:
+    st.sidebar.success("🔥 Seriyi devam ettiriyorsun!")
+elif st.session_state.streak == 0 and st.session_state.last_used_date is not None:
+    st.sidebar.warning("Dün kullanmadın, seri kırıldı 😔")
+
+# ====================== ANA İÇERİK ======================
 # Güvenli Session State
 if "question" not in st.session_state:
     st.session_state.question = ""
@@ -114,7 +138,7 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# ==================== SORUYU ÇÖZ ====================
+# Soruyu Çöz butonu
 if st.button("Soruyu Çöz", type="primary"):
     if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
@@ -124,14 +148,17 @@ if st.button("Soruyu Çöz", type="primary"):
                 answer = chat.ask_new_question(st.session_state.question, image=image)
                 st.subheader("Cevap")
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
-            except openai.RateLimitError:
-                st.error("⚠️ Çok fazla istek gönderildi. Lütfen 15-20 saniye bekleyip tekrar deneyin.")
-            except openai.AuthenticationError:
-                st.error("🔑 API anahtarı hatası. Lütfen yöneticilere bildirin.")
+                
+                # Streak güncelle
+                st.session_state.total_attempts = st.session_state.get("total_attempts", 0) + 1
+                if st.session_state.last_used_date != today:
+                    st.session_state.streak += 1
+                st.session_state.last_used_date = today
+                
             except Exception as e:
-                st.error(f"Bir hata oluştu: {str(e)}")
+                st.error(f"Hata: {str(e)}")
 
-# ==================== KENDİ CEVABINI KONTROL ETTİR ====================
+# Kendi cevabını kontrol ettir
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
@@ -165,14 +192,14 @@ if st.button("Cevabımı Kontrol Et"):
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
                 
-            except openai.RateLimitError:
-                st.error("⚠️ Çok fazla istek gönderildi. Lütfen 15-20 saniye bekleyip tekrar deneyin.")
-            except openai.AuthenticationError:
-                st.error("🔑 API anahtarı hatası. Lütfen yöneticilere bildirin.")
+                # Streak güncelle
+                if st.session_state.last_used_date != today:
+                    st.session_state.streak += 1
+                st.session_state.last_used_date = today
+                
             except Exception as e:
-                st.error(f"Kontrol sırasında hata oluştu: {str(e)}")
+                st.error(f"Kontrol hatası: {str(e)}")
 
-# Kontrol sonucunu göster
 if st.session_state.control_result:
     st.subheader("Kontrol Sonucu")
     st.markdown(st.session_state.control_result)
