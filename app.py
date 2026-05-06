@@ -15,11 +15,11 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Tema seçimi (varsayılan koyu mod)
+# Tema seçimi
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
-# Sağ üstte tema değiştirme butonu
+# Sağ üst tema butonu
 st.markdown(
     """
     <style>
@@ -48,7 +48,7 @@ if st.button("🌙" if st.session_state.dark_mode else "☀️",
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
-# Tema stili (daha koyu arka plan)
+# Tema stili
 if st.session_state.dark_mode:
     st.markdown(
         """
@@ -91,7 +91,7 @@ st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="center
 st.title("Akıllı Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
-# Güvenli Session State başlatma
+# Güvenli Session State
 if "question" not in st.session_state:
     st.session_state.question = ""
 if "uploaded_image" not in st.session_state:
@@ -114,7 +114,7 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# Soruyu Çöz butonu
+# ==================== SORUYU ÇÖZ ====================
 if st.button("Soruyu Çöz", type="primary"):
     if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
@@ -124,10 +124,14 @@ if st.button("Soruyu Çöz", type="primary"):
                 answer = chat.ask_new_question(st.session_state.question, image=image)
                 st.subheader("Cevap")
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
+            except openai.RateLimitError:
+                st.error("⚠️ Çok fazla istek gönderildi. Lütfen 15-20 saniye bekleyip tekrar deneyin.")
+            except openai.AuthenticationError:
+                st.error("🔑 API anahtarı hatası. Lütfen yöneticilere bildirin.")
             except Exception as e:
-                st.error(f"Hata: {str(e)}")
+                st.error(f"Bir hata oluştu: {str(e)}")
 
-# Opsiyonel: Kendi cevabını kontrol ettir
+# ==================== KENDİ CEVABINI KONTROL ETTİR ====================
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
@@ -148,12 +152,12 @@ if st.button("Cevabımı Kontrol Et"):
 
                 Bu cevap doğru mu?
                 - Doğruysa tebrik et ve kısa açıklama yap.
-                - Yanlışsa neden yanlış olduğunu net bir şekilde açıkla.
-                Cevabı kısa ve net tut.
+                - Yanlışsa neden yanlış olduğunu net açıkla.
+                Cevabı kısa tut.
                 """
 
                 response = openai.chat.completions.create(
-                    model="gpt-4o-mini",      # Daha az limit sorunu için önerilen model
+                    model="gpt-4o-mini",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=400
                 )
@@ -161,20 +165,22 @@ if st.button("Cevabımı Kontrol Et"):
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
                 
+            except openai.RateLimitError:
+                st.error("⚠️ Çok fazla istek gönderildi. Lütfen 15-20 saniye bekleyip tekrar deneyin.")
+            except openai.AuthenticationError:
+                st.error("🔑 API anahtarı hatası. Lütfen yöneticilere bildirin.")
             except Exception as e:
-                st.error(f"Kontrol hatası: {str(e)}")
+                st.error(f"Kontrol sırasında hata oluştu: {str(e)}")
 
 # Kontrol sonucunu göster
 if st.session_state.control_result:
     st.subheader("Kontrol Sonucu")
     st.markdown(st.session_state.control_result)
 
-# Temizle butonu
 if st.button("Tümünü Temizle"):
     st.session_state.clear()
     st.rerun()
 
-# Alt kısım
 st.markdown("---")
 st.markdown("**Her soru bir zaferdir – devam et! 💪**")
 
