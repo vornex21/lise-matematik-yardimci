@@ -15,11 +15,11 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# Tema seçimi
+# Tema seçimi (varsayılan koyu mod)
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
-# Sağ üst tema butonu
+# Sağ üstte tema değiştirme butonu
 st.markdown(
     """
     <style>
@@ -48,7 +48,7 @@ if st.button("🌙" if st.session_state.dark_mode else "☀️",
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
-# Tema stili
+# Tema stili (daha koyu arka plan)
 if st.session_state.dark_mode:
     st.markdown(
         """
@@ -91,7 +91,7 @@ st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="center
 st.title("Akıllı Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
-# Güvenli Session State
+# Güvenli Session State başlatma
 if "question" not in st.session_state:
     st.session_state.question = ""
 if "uploaded_image" not in st.session_state:
@@ -127,7 +127,7 @@ if st.button("Soruyu Çöz", type="primary"):
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
-# Opsiyonel cevap kontrol
+# Opsiyonel: Kendi cevabını kontrol ettir
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
@@ -148,23 +148,28 @@ if st.button("Cevabımı Kontrol Et"):
 
                 Bu cevap doğru mu?
                 - Doğruysa tebrik et ve kısa açıklama yap.
-                - Yanlışsa neden yanlış olduğunu net açıkla.
-                Cevabı kısa tut.
+                - Yanlışsa neden yanlış olduğunu net bir şekilde açıkla.
+                Cevabı kısa ve net tut.
                 """
+
                 response = openai.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-4o-mini",      # Daha az limit sorunu için önerilen model
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=400
                 )
+                
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
+                
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
 
+# Kontrol sonucunu göster
 if st.session_state.control_result:
     st.subheader("Kontrol Sonucu")
     st.markdown(st.session_state.control_result)
 
+# Temizle butonu
 if st.button("Tümünü Temizle"):
     st.session_state.clear()
     st.rerun()
@@ -173,10 +178,9 @@ if st.button("Tümünü Temizle"):
 st.markdown("---")
 st.markdown("**Her soru bir zaferdir – devam et! 💪**")
 
-# Yeni uyarı cümlesi (kıvrımlı çizgi + açık gri + italik)
 st.markdown(
     """
-    <p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 0.95rem; margin-top: 10px;">
+    <p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 0.95rem; margin-top: 8px;">
         ━━━ Bu AI alfa sürümündedir, hata yapabilir. ━━━
     </p>
     """,
