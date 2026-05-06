@@ -5,7 +5,7 @@ from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
-from datetime import datetime, date
+from datetime import date
 
 # API anahtarı
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -16,7 +16,7 @@ log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 # Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# ====================== GÜNLÜK STREAK SİSTEMİ ======================
+# ====================== GÜNLÜK STREAK ======================
 if "streak" not in st.session_state:
     st.session_state.streak = 0
 if "last_used_date" not in st.session_state:
@@ -24,13 +24,12 @@ if "last_used_date" not in st.session_state:
 
 today = date.today()
 
-# Bugün ilk kullanım mı kontrol et
+# Streak kontrolü
 if st.session_state.last_used_date != today:
-    # Yeni gün başladı
     if st.session_state.last_used_date is not None:
-        # Dün kullanıldıysa streak devam eder, kullanılmadıysa sıfırlanır
         if (today - st.session_state.last_used_date).days > 1:
-            st.session_state.streak = 0  # Streak kırıldı
+            st.session_state.streak = 0  # Seri kırıldı
+    st.session_state.last_used_date = today
 
 # ====================== TEMA ======================
 if "dark_mode" not in st.session_state:
@@ -102,19 +101,20 @@ else:
 
 st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="centered")
 
-st.title("Akıllı Matematik Yardımcısı")
+# ====================== BAŞLIK + STREAK ======================
+col_title, col_streak = st.columns([4, 1])
+
+with col_title:
+    st.title("Akıllı Matematik Yardımcısı")
+
+with col_streak:
+    if st.session_state.streak > 0:
+        st.markdown(f"**🔥 {st.session_state.streak} Gün**")
+    else:
+        st.markdown("**🔥 Seri Başlasın!**")
+
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
-# Sidebar - Streak Gösterimi
-st.sidebar.title("🔥 Günlük Streak")
-st.sidebar.metric("Mevcut Seri", f"{st.session_state.streak} gün")
-
-if st.session_state.streak >= 1:
-    st.sidebar.success("🔥 Seriyi devam ettiriyorsun!")
-elif st.session_state.streak == 0 and st.session_state.last_used_date is not None:
-    st.sidebar.warning("Dün kullanmadın, seri kırıldı 😔")
-
-# ====================== ANA İÇERİK ======================
 # Güvenli Session State
 if "question" not in st.session_state:
     st.session_state.question = ""
@@ -149,8 +149,7 @@ if st.button("Soruyu Çöz", type="primary"):
                 st.subheader("Cevap")
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
                 
-                # Streak güncelle
-                st.session_state.total_attempts = st.session_state.get("total_attempts", 0) + 1
+                # Streak Güncelle
                 if st.session_state.last_used_date != today:
                     st.session_state.streak += 1
                 st.session_state.last_used_date = today
@@ -192,7 +191,7 @@ if st.button("Cevabımı Kontrol Et"):
                 result = response.choices[0].message.content
                 st.session_state.control_result = result
                 
-                # Streak güncelle
+                # Streak Güncelle
                 if st.session_state.last_used_date != today:
                     st.session_state.streak += 1
                 st.session_state.last_used_date = today
