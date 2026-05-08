@@ -8,7 +8,7 @@ from datetime import date
 
 # ==================== GEMINI AYARI ====================
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+model = genai.GenerativeModel('gemini-1.5-flash')   # ← Bu en stabil hali
 
 # Log klasörü
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
