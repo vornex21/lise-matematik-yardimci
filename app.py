@@ -13,7 +13,7 @@ model = genai.GenerativeModel('gemini-1.5-flash')
 # Log klasörü
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 
-# Chat başlat (eski chat sistemi hâlâ kullanılabilir)
+# Chat başlat
 chat = VisionChatWithMemory(log_dir=log_dir)
 
 # Tema seçimi
@@ -112,14 +112,13 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# ====================== SORUYU ÇÖZ ======================
+# Soruyu Çöz
 if st.button("Soruyu Çöz", type="primary"):
     if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
     else:
         with st.spinner("Çözülüyor..."):
             try:
-                # Gemini ile görüntü + metin gönderiyoruz
                 if image:
                     response = model.generate_content([st.session_state.question, image])
                 else:
@@ -131,7 +130,7 @@ if st.button("Soruyu Çöz", type="primary"):
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
-# ====================== CEVAP KONTROL ======================
+# Kendi cevabını kontrol ettir
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
