@@ -1,37 +1,22 @@
-import openai
 import streamlit as st
 import os
 from PIL import Image
 from vision_chat import VisionChatWithMemory
 from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
-from datetime import date
+import google.generativeai as genai
 
-# API anahtarı
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# ==================== GEMINI AYARI ====================
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Log klasörü
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 
-# Chat başlat
+# Chat başlat (eski chat sistemi hâlâ kullanılabilir)
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# ====================== GÜNLÜK STREAK ======================
-if "streak" not in st.session_state:
-    st.session_state.streak = 0
-if "last_used_date" not in st.session_state:
-    st.session_state.last_used_date = None
-
-today = date.today()
-
-# Streak kontrolü
-if st.session_state.last_used_date != today:
-    if st.session_state.last_used_date is not None:
-        if (today - st.session_state.last_used_date).days > 1:
-            st.session_state.streak = 0  # Seri kırıldı
-    st.session_state.last_used_date = today
-
-# ====================== TEMA ======================
+# Tema seçimi
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
@@ -101,21 +86,10 @@ else:
 
 st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="centered")
 
-# ====================== BAŞLIK + STREAK ======================
-col_title, col_streak = st.columns([4, 1])
-
-with col_title:
-    st.title("Akıllı Matematik Yardımcısı")
-
-with col_streak:
-    if st.session_state.streak > 0:
-        st.markdown(f"**🔥 {st.session_state.streak} Gün**")
-    else:
-        st.markdown("**🔥 Seri Başlasın!**")
-
+st.title("Akıllı Matematik Yardımcısı")
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
-# Güvenli Session State
+# Session State
 if "question" not in st.session_state:
     st.session_state.question = ""
 if "uploaded_image" not in st.session_state:
@@ -138,26 +112,26 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Yüklenen Görsel")
 
-# Soruyu Çöz butonu
+# ====================== SORUYU ÇÖZ ======================
 if st.button("Soruyu Çöz", type="primary"):
     if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
     else:
         with st.spinner("Çözülüyor..."):
             try:
-                answer = chat.ask_new_question(st.session_state.question, image=image)
+                # Gemini ile görüntü + metin gönderiyoruz
+                if image:
+                    response = model.generate_content([st.session_state.question, image])
+                else:
+                    response = model.generate_content(st.session_state.question)
+                
+                answer = response.text
                 st.subheader("Cevap")
-                st.markdown(LatexNodes2Text().latex_to_text(answer))
-                
-                # Streak Güncelle
-                if st.session_state.last_used_date != today:
-                    st.session_state.streak += 1
-                st.session_state.last_used_date = today
-                
+                st.markdown(answer)
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
-# Kendi cevabını kontrol ettir
+# ====================== CEVAP KONTROL ======================
 st.markdown("### İstersen kendi cevabını kontrol ettir")
 st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
                                             value=st.session_state.user_answer,
@@ -181,21 +155,9 @@ if st.button("Cevabımı Kontrol Et"):
                 - Yanlışsa neden yanlış olduğunu net açıkla.
                 Cevabı kısa tut.
                 """
-
-                response = openai.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=400
-                )
-                
-                result = response.choices[0].message.content
+                response = model.generate_content(prompt)
+                result = response.text
                 st.session_state.control_result = result
-                
-                # Streak Güncelle
-                if st.session_state.last_used_date != today:
-                    st.session_state.streak += 1
-                st.session_state.last_used_date = today
-                
             except Exception as e:
                 st.error(f"Kontrol hatası: {str(e)}")
 
