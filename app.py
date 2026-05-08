@@ -8,7 +8,7 @@ from datetime import date
 
 # ==================== GEMINI AYARI ====================
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 # Log klasörü
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
@@ -28,13 +28,21 @@ today = date.today()
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
+# Sağ üst tema butonu
 st.markdown(
     """
     <style>
         .theme-toggle {
-            position: fixed; top: 15px; right: 15px; z-index: 9999;
-            background: transparent; border: none; font-size: 28px;
-            cursor: pointer; padding: 8px 12px; border-radius: 50%;
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 50%;
         }
         .theme-toggle:hover { background: rgba(255,255,255,0.1); }
     </style>
@@ -42,16 +50,36 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-if st.button("🌙" if st.session_state.dark_mode else "☀️", key="theme_btn"):
+if st.button("🌙" if st.session_state.dark_mode else "☀️", 
+             key="theme_btn", help="Tema değiştir"):
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
+# Tema stili
 if st.session_state.dark_mode:
-    st.markdown("""<style>.stApp { background-color: #0f172a; color: #f3f4f6; } 
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea { background-color: #1e2937; color: #f3f4f6; }</style>""", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <style>
+            .stApp { background-color: #0f172a; color: #f3f4f6; }
+            .stTextInput > div > div > input,
+            .stTextArea > div > div > textarea,
+            .stFileUploader > div { background-color: #1e2937; color: #f3f4f6; border: 1px solid #475569; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 else:
-    st.markdown("""<style>.stApp { background-color: #ffffff; color: #111827; } 
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea { background-color: #f9fafb; color: #111827; }</style>""", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <style>
+            .stApp { background-color: #ffffff; color: #111827; }
+            .stTextInput > div > div > input,
+            .stTextArea > div > div > textarea,
+            .stFileUploader > div { background-color: #f9fafb; color: #111827; border: 1px solid #d1d5db; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.set_page_config(page_title="Akıllı Matematik Yardımcısı", layout="centered")
 
@@ -60,8 +88,7 @@ col1, col2 = st.columns([4, 1])
 with col1:
     st.title("Akıllı Matematik Yardımcısı")
 with col2:
-    streak_color = "🔥" if st.session_state.streak > 0 else "⚪"
-    st.markdown(f"### {streak_color} {st.session_state.streak} Gün")
+    st.markdown(f"### {'🔥' if st.session_state.streak > 0 else '⚪'} {st.session_state.streak} Gün")
 
 st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol ettir!")
 
@@ -96,7 +123,7 @@ if st.button("Soruyu Çöz", type="primary"):
                 st.subheader("Cevap")
                 st.markdown(response.text)
                 
-                # === STREAK GÜNCELLEME ===
+                # Streak Güncelle
                 if st.session_state.last_used_date != today:
                     st.session_state.streak += 1
                 st.session_state.last_used_date = today
@@ -127,7 +154,7 @@ if st.button("Cevabımı Kontrol Et"):
                 response = model.generate_content(prompt)
                 st.session_state.control_result = response.text
                 
-                # === STREAK GÜNCELLEME ===
+                # Streak Güncelle
                 if st.session_state.last_used_date != today:
                     st.session_state.streak += 1
                 st.session_state.last_used_date = today
@@ -148,7 +175,7 @@ st.markdown("**Her soru bir zaferdir – devam et! 💪**")
 
 st.markdown(
     """
-    <p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 0.95rem;">
+    <p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 0.95rem; margin-top: 8px;">
         ━━━ Bu AI alfa sürümündedir, hata yapabilir. ━━━
     </p>
     """,
