@@ -1,7 +1,8 @@
+import openai
+import base64
 import os
 import json
 import shutil
-import tempfile
 from datetime import datetime
 
 class VisionChatWithMemory:
@@ -17,14 +18,43 @@ class VisionChatWithMemory:
             with open(self.history_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 self.messages = data.get("messages", [])
-    
+
     def save_history(self):
         with open(self.history_path, "w", encoding="utf-8") as f:
             json.dump({"messages": self.messages}, f, ensure_ascii=False, indent=2)
 
     def ask_new_question(self, question, image=None):
-        # Basit versiyon - şu an app.py içinde Gemini çağrısı yapıyoruz
-        # İleride burayı da geliştirebiliriz
-        self.messages.append({"role": "user", "content": question})
-        self.save_history()
-        return "Bu fonksiyon şu anda app.py üzerinden yönetiliyor."
+        try:
+            content = [{"type": "text", "text": question}]
+
+            if image:
+                # Görseli base64'e çevir
+                import io
+                buffered = io.BytesIO()
+                image.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{img_str}"}
+                })
+
+            response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "Sen yardımcı bir matematik öğretmenisin. Soruları adım adım ve anlaşılır şekilde çöz."},
+                    {"role": "user", "content": content}
+                ],
+                max_tokens=800,
+                temperature=0.7
+            )
+            
+            answer = response.choices[0].message.content
+            self.messages.append({"role": "user", "content": question})
+            self.messages.append({"role": "assistant", "content": answer})
+            self.save_history()
+            
+            return answer
+
+        except Exception as e:
+            return f"Hata oluştu: {str(e)}"
