@@ -1,22 +1,20 @@
 import streamlit as st
 from PIL import Image
 from vision_chat import VisionChatWithMemory
+from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
-import google.generativeai as genai
+import openai
 from datetime import date
 
-# ==================== GEMINI AYARI ====================
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-
-# En stabil model (şu anda en az hata veren)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# ==================== OPENAI AYARI ====================
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # Log klasörü
 log_dir = tempfile.mkdtemp(prefix="vision_chat_")
 
 chat = VisionChatWithMemory(log_dir=log_dir)
 
-# ====================== STREAK ======================
+# ====================== STREAK SİSTEMİ ======================
 if "streak" not in st.session_state:
     st.session_state.streak = 0
 if "last_used_date" not in st.session_state:
@@ -36,6 +34,7 @@ st.markdown(
             background: transparent; border: none; font-size: 28px;
             cursor: pointer; padding: 8px 12px; border-radius: 50%;
         }
+        .theme-toggle:hover { background: rgba(255,255,255,0.1); }
     </style>
     """, unsafe_allow_html=True
 )
@@ -59,30 +58,30 @@ st.markdown("🔥 Sor, çöz, kazan! | 🧠 İstersen cevabını da kontrol etti
 
 # Session State
 for key in ["question", "user_answer", "control_result"]:
-    if key not in st.session_state: st.session_state[key] = ""
+    if key not in st.session_state:
+        st.session_state[key] = ""
 if "uploaded_image" not in st.session_state:
     st.session_state.uploaded_image = None
 
-st.session_state.question = st.text_input("Sorunuzu buraya yazın", value=st.session_state.question, placeholder="Örn: 5+5")
+st.session_state.question = st.text_input("Sorunuzu buraya yazın", 
+                                          value=st.session_state.question,
+                                          placeholder="Örn: 2x + 5 = 13 çöz")
 
 uploaded_image = st.file_uploader("Görsel yükle (isteğe bağlı)", type=["png", "jpg", "jpeg"])
 image = Image.open(uploaded_image) if uploaded_image else None
 if image:
     st.image(image, caption="Yüklenen Görsel")
 
-# Soruyu Çöz
+# ====================== SORUYU ÇÖZ ======================
 if st.button("Soruyu Çöz", type="primary"):
-    if not st.session_state.question.strip() and not image:
+    if not st.session_state.question.strip() and image is None:
         st.warning("Lütfen soru yazın veya görsel yükleyin.")
     else:
         with st.spinner("Çözülüyor..."):
             try:
-                contents = [st.session_state.question]
-                if image:
-                    contents.append(image)
-                response = model.generate_content(contents)
+                answer = chat.ask_new_question(st.session_state.question, image=image)
                 st.subheader("Cevap")
-                st.markdown(response.text)
+                st.markdown(LatexNodes2Text().latex_to_text(answer))
                 
                 if st.session_state.last_used_date != today:
                     st.session_state.streak += 1
@@ -90,21 +89,32 @@ if st.button("Soruyu Çöz", type="primary"):
             except Exception as e:
                 st.error(f"Hata: {str(e)}")
 
-# Cevap Kontrol
+# ====================== CEVAP KONTROL ======================
 st.markdown("### İstersen kendi cevabını kontrol ettir")
-st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", value=st.session_state.user_answer, height=100, placeholder="Örn: x = 4")
+st.session_state.user_answer = st.text_area("Kendi cevabını buraya yaz", 
+                                            value=st.session_state.user_answer,
+                                            height=100,
+                                            placeholder="Örn: x = 4")
 
 if st.button("Cevabımı Kontrol Et"):
-    if not st.session_state.question.strip() and not image:
+    if not st.session_state.question.strip() and image is None:
         st.warning("Önce soru yazın veya görsel yükleyin.")
     elif not st.session_state.user_answer.strip():
         st.warning("Cevabınızı yazmadınız!")
     else:
         with st.spinner("Kontrol ediliyor..."):
             try:
-                prompt = f"Soru: {st.session_state.question}\nCevap: {st.session_state.user_answer}\nDoğru mu? Açıklayın."
-                response = model.generate_content(prompt)
-                st.session_state.control_result = response.text
+                prompt = f"""
+                Soru: {st.session_state.question}
+                Kullanıcının cevabı: {st.session_state.user_answer}
+                Bu cevap doğru mu? Doğruysa tebrik et, yanlışsa nedenini net açıkla.
+                """
+                response = openai.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=400
+                )
+                st.session_state.control_result = response.choices[0].message.content
                 
                 if st.session_state.last_used_date != today:
                     st.session_state.streak += 1
@@ -122,3 +132,10 @@ if st.button("Tümünü Temizle"):
 
 st.markdown("---")
 st.markdown("**Her soru bir zaferdir – devam et! 💪**")
+st.markdown(
+    """
+    <p style="text-align: center; color: #94a3b8; font-style: italic;">
+        ━━━ Bu AI alfa sürümündedir, hata yapabilir. ━━━
+    </p>
+    """, unsafe_allow_html=True
+)
