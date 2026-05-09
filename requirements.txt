@@ -1,4 +1,4 @@
 streamlit
 pillow
 pylatexenc
-google-generativeai
+openai
