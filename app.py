@@ -45,7 +45,7 @@ if st.session_state.dark_mode:
 
 # ====================== SIDEBAR ======================
 with st.sidebar:
-    st.title()
+    st.title(" ")
     
     # Model Seçimi
     st.subheader("🤖 AI Modeli")
