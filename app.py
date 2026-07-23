@@ -44,8 +44,7 @@ if st.session_state.dark_mode:
     st.markdown("""<style>.stApp { background-color: #0f172a; color: #f3f4f6; }</style>""", unsafe_allow_html=True)
 
 # ====================== SIDEBAR ======================
-with st.sidebar:
-    st.title("⚙️ Ayarlar")
+
     
     # Model Seçimi
     st.subheader("🤖 AI Modeli")
