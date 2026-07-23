@@ -47,7 +47,7 @@ if st.session_state.dark_mode:
 with st.sidebar:
     st.title("⚙️ Ayarlar")
     
-    # AI Model Seçimi
+    # Model Seçimi
     st.subheader("🤖 AI Modeli")
     model_options = ["gpt-4o-mini", "gpt-4o"]
     selected_model = st.selectbox(
@@ -70,7 +70,7 @@ with st.sidebar:
     st.markdown("---")
     st.metric("🔥 Streak", f"{st.session_state.streak} Gün")
 
-# ====================== ANA UYGULAMA ======================
+# ====================== ANA EKRAN ======================
 col1, col2 = st.columns([4, 1])
 with col1:
     st.title("🧠 Akıllı Matematik Yardımcısı")
@@ -79,14 +79,14 @@ with col2:
         st.session_state.dark_mode = not st.session_state.dark_mode
         st.rerun()
 
-st.markdown("**Adım adım çözümler • Görsel destekli**")
+st.markdown("**Adım adım çözümler • Görsel destekli • Kişisel Matematik Öğretmenin**")
 
 # Sohbet Geçmişi
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(LatexNodes2Text().latex_to_text(message["content"]))
 
-# Kullanıcı Soru Girişi
+# Soru Girişi
 if prompt := st.chat_input("Matematik sorunuzu yazın..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     
@@ -109,7 +109,7 @@ if prompt := st.chat_input("Matematik sorunuzu yazın..."):
             with st.chat_message("assistant"):
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
 
-            # Streak Güncelle
+            # Streak Sistemi (Düzeltilmiş)
             if st.session_state.last_used_date != today:
                 st.session_state.streak += 1
                 st.session_state.last_used_date = today
@@ -118,7 +118,7 @@ if prompt := st.chat_input("Matematik sorunuzu yazın..."):
             st.error(f"Hata oluştu: {str(e)}")
 
 # Görsel Yükleme
-with st.expander("📸 Görsel Yükle (İsteğe Bağlı)"):
+with st.expander("📸 Görsel Yükle"):
     uploaded_file = st.file_uploader("Soru fotoğrafı yükleyin", type=["png", "jpg", "jpeg"])
     if uploaded_file:
         st.session_state.uploaded_file = uploaded_file
