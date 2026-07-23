@@ -2,11 +2,12 @@ import openai
 import base64
 import os
 import json
-import shutil
+import io
 from datetime import datetime
+from PIL import Image
 
 class VisionChatWithMemory:
-    def __init__(self, log_dir):
+    def __init__(self, log_dir="chat_logs"):
         self.log_dir = log_dir
         os.makedirs(log_dir, exist_ok=True)
         self.history_path = os.path.join(log_dir, "chat_history.json")
@@ -15,46 +16,62 @@ class VisionChatWithMemory:
 
     def load_history(self):
         if os.path.exists(self.history_path):
-            with open(self.history_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.messages = data.get("messages", [])
+            try:
+                with open(self.history_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.messages = data.get("messages", [])
+            except:
+                self.messages = []
 
     def save_history(self):
-        with open(self.history_path, "w", encoding="utf-8") as f:
-            json.dump({"messages": self.messages}, f, ensure_ascii=False, indent=2)
+        try:
+            with open(self.history_path, "w", encoding="utf-8") as f:
+                json.dump({"messages": self.messages}, f, ensure_ascii=False, indent=2)
+        except:
+            pass
 
-    def ask_new_question(self, question, image=None):
+    def get_system_prompt(self, subject="Genel Matematik"):
+        prompts = {
+            "Cebir": "Sen uzman bir Cebir öğretmenisin. Adım adım ve anlaşılır şekilde çöz.",
+            "Geometri": "Sen uzman bir Geometri öğretmenisin. Görsel analizlerde güçlü ol.",
+            "Türev ve İntegral": "Sen ileri seviye Kalkülüs öğretmenisin. Türev ve integralleri detaylı çöz.",
+            "Olasılık": "Sen olasılık ve istatistik uzmanısın.",
+            "Genel Matematik": "Sen yardımcı bir matematik öğretmenisin. Adım adım çöz."
+        }
+        return prompts.get(subject, prompts["Genel Matematik"])
+
+    def ask_new_question(self, question, image=None, model="gpt-4o-mini", subject="Genel Matematik"):
         try:
             content = [{"type": "text", "text": question}]
-
+            
             if image:
-                # Görseli base64'e çevir
-                import io
                 buffered = io.BytesIO()
                 image.save(buffered, format="PNG")
                 img_str = base64.b64encode(buffered.getvalue()).decode()
-                
                 content.append({
                     "type": "image_url",
                     "image_url": {"url": f"data:image/png;base64,{img_str}"}
                 })
 
-            response = openai.chat.completions.create(
-                model="gpt-4o-mini",
+            system_prompt = self.get_system_prompt(subject)
+
+            response = openai.chat.completions.create(   # ← Bu satır client ile çalışmayabilir, aşağıdakini dene
+                model=model,
                 messages=[
-                    {"role": "system", "content": "Sen yardımcı bir matematik öğretmenisin. Soruları adım adım ve anlaşılır şekilde çöz."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": content}
                 ],
-                max_tokens=800,
-                temperature=0.7
+                max_tokens=1200,
+                temperature=0.7,
             )
-            
+           
             answer = response.choices[0].message.content
-            self.messages.append({"role": "user", "content": question})
+
+            self.messages.append({"role": "user", "content": f"[{subject}] {question}"})
             self.messages.append({"role": "assistant", "content": answer})
             self.save_history()
             
             return answer
 
         except Exception as e:
-            return f"Hata oluştu: {str(e)}"
+            return f"❌ Hata oluştu: {str(e)}"
