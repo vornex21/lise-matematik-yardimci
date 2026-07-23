@@ -1,4 +1,6 @@
-streamlit
-pillow
-pylatexenc
-openai
+streamlit>=1.38.0
+pillow>=10.4.0
+pylatexenc>=2.10
+openai>=1.40.0
+anthropic>=0.34.0     # Claude için
+python-dotenv>=1.0.1
