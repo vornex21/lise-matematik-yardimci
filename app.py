@@ -58,7 +58,7 @@ with st.sidebar:
     st.session_state.current_subject = selected_subject
 
     st.markdown("---")
-    st.metric("🔥 Streak", f"{st.session_state.streak} Gün")
+    st.metric("🔥 Streak", f"{st.session_state.streak} Gün", delta="bugün aktif" if st.session_state.last_used_date == today else None)
 
 # ====================== ANA EKRAN ======================
 col1, col2 = st.columns([4, 1])
@@ -79,12 +79,16 @@ for message in st.session_state.messages:
 # Soru Girişi
 if prompt := st.chat_input("Matematik sorunuzu yazın..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
+    
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.spinner("Çözülüyor..."):
         try:
-            image = Image.open(st.session_state.uploaded_file) if st.session_state.uploaded_file and isinstance(st.session_state.uploaded_file, Image.Image) else None
+            image = None
+            if st.session_state.uploaded_file and not isinstance(st.session_state.uploaded_file, str):
+                if st.session_state.uploaded_file.type != "application/pdf":
+                    image = Image.open(st.session_state.uploaded_file)
 
             answer = chat.ask_new_question(
                 question=prompt,
@@ -94,17 +98,20 @@ if prompt := st.chat_input("Matematik sorunuzu yazın..."):
             )
 
             st.session_state.messages.append({"role": "assistant", "content": answer})
+            
             with st.chat_message("assistant"):
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
 
+            # ====================== STREK SİSTEMİ (DÜZELTİLMİŞ) ======================
             if st.session_state.last_used_date != today:
                 st.session_state.streak += 1
                 st.session_state.last_used_date = today
+                st.success("🔥 Streak'in arttı! Bugün de devam ettin.")
 
         except Exception as e:
             st.error(f"Hata: {str(e)}")
 
-# ====================== DOSYA YÜKLEME (Görsel + PDF) ======================
+# ====================== DOSYA YÜKLEME ======================
 with st.expander("📄 PDF veya Görsel Yükle"):
     uploaded_file = st.file_uploader("PDF veya resim yükleyin", type=["png", "jpg", "jpeg", "pdf"])
     
@@ -112,14 +119,14 @@ with st.expander("📄 PDF veya Görsel Yükle"):
         st.session_state.uploaded_file = uploaded_file
         
         if uploaded_file.type == "application/pdf":
-            st.success("PDF yüklendi. İçeriğini okumak için soru sorabilirsiniz.")
-            # PDF Önizleme (ilk sayfadan metin)
+            st.success("✅ PDF yüklendi")
             try:
                 reader = PdfReader(uploaded_file)
-                first_page_text = reader.pages[0].extract_text()[:300]  # İlk 300 karakter
-                st.text_area("PDF'ten çıkarılan metin (örnek)", first_page_text, height=150)
+                text_sample = reader.pages[0].extract_text()[:400]
+                if text_sample:
+                    st.text_area("PDF'ten çıkarılan örnek metin:", text_sample, height=120)
             except:
-                st.warning("PDF metni okunamadı.")
+                pass
         else:
             image = Image.open(uploaded_file)
             st.image(image, caption="Yüklenen Görsel", width=400)
