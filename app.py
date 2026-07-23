@@ -5,13 +5,13 @@ from pylatexenc.latex2text import LatexNodes2Text
 import tempfile
 import openai
 from datetime import date
+from PyPDF2 import PdfReader
 
 # ====================== OPENAI CLIENT ======================
 if "openai_client" not in st.session_state:
     st.session_state.openai_client = openai.OpenAI(
         api_key=st.secrets["OPENAI_API_KEY"]
     )
-client = st.session_state.openai_client
 
 # ====================== VISION CHAT ======================
 if "log_dir" not in st.session_state:
@@ -47,24 +47,14 @@ if st.session_state.dark_mode:
 with st.sidebar:
     st.title(" ")
     
-    # Model Seçimi
     st.subheader("🤖 AI Modeli")
     model_options = ["gpt-4o-mini", "gpt-4o"]
-    selected_model = st.selectbox(
-        "Model Seç", 
-        model_options,
-        index=model_options.index(st.session_state.selected_model)
-    )
+    selected_model = st.selectbox("Model Seç", model_options, index=0)
     st.session_state.selected_model = selected_model
 
-    # Ders Seçimi
     st.subheader("📚 Ders")
     subjects = ["Genel Matematik", "Cebir", "Geometri", "Türev ve İntegral", "Olasılık"]
-    selected_subject = st.selectbox(
-        "Konu Seç", 
-        subjects,
-        index=subjects.index(st.session_state.current_subject)
-    )
+    selected_subject = st.selectbox("Konu Seç", subjects, index=0)
     st.session_state.current_subject = selected_subject
 
     st.markdown("---")
@@ -79,7 +69,7 @@ with col2:
         st.session_state.dark_mode = not st.session_state.dark_mode
         st.rerun()
 
-st.markdown("**Adım adım çözümler • Görsel destekli • Kişisel Matematik Öğretmenin**")
+st.markdown("**Adım adım çözümler • Görsel + PDF destekli**")
 
 # Sohbet Geçmişi
 for message in st.session_state.messages:
@@ -89,13 +79,12 @@ for message in st.session_state.messages:
 # Soru Girişi
 if prompt := st.chat_input("Matematik sorunuzu yazın..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.spinner("Çözülüyor..."):
         try:
-            image = Image.open(st.session_state.uploaded_file) if st.session_state.uploaded_file else None
+            image = Image.open(st.session_state.uploaded_file) if st.session_state.uploaded_file and isinstance(st.session_state.uploaded_file, Image.Image) else None
 
             answer = chat.ask_new_question(
                 question=prompt,
@@ -105,24 +94,35 @@ if prompt := st.chat_input("Matematik sorunuzu yazın..."):
             )
 
             st.session_state.messages.append({"role": "assistant", "content": answer})
-            
             with st.chat_message("assistant"):
                 st.markdown(LatexNodes2Text().latex_to_text(answer))
 
-            # Streak Sistemi (Düzeltilmiş)
             if st.session_state.last_used_date != today:
                 st.session_state.streak += 1
                 st.session_state.last_used_date = today
 
         except Exception as e:
-            st.error(f"Hata oluştu: {str(e)}")
+            st.error(f"Hata: {str(e)}")
 
-# Görsel Yükleme
-with st.expander("📸 Görsel Yükle"):
-    uploaded_file = st.file_uploader("Soru fotoğrafı yükleyin", type=["png", "jpg", "jpeg"])
+# ====================== DOSYA YÜKLEME (Görsel + PDF) ======================
+with st.expander("📄 PDF veya Görsel Yükle"):
+    uploaded_file = st.file_uploader("PDF veya resim yükleyin", type=["png", "jpg", "jpeg", "pdf"])
+    
     if uploaded_file:
         st.session_state.uploaded_file = uploaded_file
-        st.image(uploaded_file, caption="Yüklenen Görsel", width=400)
+        
+        if uploaded_file.type == "application/pdf":
+            st.success("PDF yüklendi. İçeriğini okumak için soru sorabilirsiniz.")
+            # PDF Önizleme (ilk sayfadan metin)
+            try:
+                reader = PdfReader(uploaded_file)
+                first_page_text = reader.pages[0].extract_text()[:300]  # İlk 300 karakter
+                st.text_area("PDF'ten çıkarılan metin (örnek)", first_page_text, height=150)
+            except:
+                st.warning("PDF metni okunamadı.")
+        else:
+            image = Image.open(uploaded_file)
+            st.image(image, caption="Yüklenen Görsel", width=400)
 
 # Temizle Butonu
 if st.button("🗑️ Sohbeti Temizle"):
