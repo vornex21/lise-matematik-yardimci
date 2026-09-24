@@ -1,23 +1,17 @@
 import streamlit as st
 from PIL import Image
-from vision_chat import VisionChatWithMemory
-from pylatexenc.latex2text import LatexNodes2Text
-import tempfile
-import openai
+from google import genai
+from google.genai import types
+import os
 from datetime import date
 from PyPDF2 import PdfReader
 
-# ====================== OPENAI CLIENT ======================
-if "openai_client" not in st.session_state:
-    st.session_state.openai_client = openai.OpenAI(
-        api_key=st.secrets["OPENAI_API_KEY"]
-    )
+# ====================== GEMINI CLIENT ======================
+# Streamlit Secrets (Secrets alanından API Key alma)
+api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
-# ====================== VISION CHAT ======================
-if "log_dir" not in st.session_state:
-    st.session_state.log_dir = tempfile.mkdtemp(prefix="math_chat_")
-
-chat = VisionChatWithMemory(log_dir=st.session_state.log_dir)
+if "gemini_client" not in st.session_state and api_key:
+    st.session_state.gemini_client = genai.Client(api_key=api_key)
 
 # ====================== SESSION STATE ======================
 if "streak" not in st.session_state:
@@ -29,7 +23,7 @@ if "messages" not in st.session_state:
 if "current_subject" not in st.session_state:
     st.session_state.current_subject = "Genel Matematik"
 if "selected_model" not in st.session_state:
-    st.session_state.selected_model = "gpt-4o-mini"
+    st.session_state.selected_model = "gemini-2.5-flash"
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 if "uploaded_file" not in st.session_state:
@@ -45,10 +39,10 @@ if st.session_state.dark_mode:
 
 # ====================== SIDEBAR ======================
 with st.sidebar:
-    st.title(" ")
+    st.title("⚙️ Ayarlar")
     
     st.subheader("🤖 AI Modeli")
-    model_options = ["gpt-4o-mini", "gpt-4o"]
+    model_options = ["gemini-2.5-flash", "gemini-2.5-pro"]
     selected_model = st.selectbox("Model Seç", model_options, index=0)
     st.session_state.selected_model = selected_model
 
@@ -71,10 +65,10 @@ with col2:
 
 st.markdown("**Adım adım çözümler • Görsel + PDF destekli**")
 
-# Sohbet Geçmişi
+# Sohbet Geçmişini Göster
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(LatexNodes2Text().latex_to_text(message["content"]))
+        st.markdown(message["content"])
 
 # Soru Girişi
 if prompt := st.chat_input("Matematik sorunuzu yazın..."):
@@ -85,24 +79,50 @@ if prompt := st.chat_input("Matematik sorunuzu yazın..."):
 
     with st.spinner("Çözülüyor..."):
         try:
-            image = None
-            if st.session_state.uploaded_file and not isinstance(st.session_state.uploaded_file, str):
-                if st.session_state.uploaded_file.type != "application/pdf":
-                    image = Image.open(st.session_state.uploaded_file)
+            if "gemini_client" not in st.session_state or not st.session_state.gemini_client:
+                st.error("API Anahtarı bulunamadı. Lütfen App Settings > Secrets bölümüne GEMINI_API_KEY eklediğinizden emin olun.")
+                st.stop()
 
-            answer = chat.ask_new_question(
-                question=prompt,
-                image=image,
+            # Gönderilecek İçerikleri Hazırlama
+            contents = []
+            
+            # Sistem Yönlendirmesi
+            sys_instruction = f"Sen uzman bir matematik öğretmenisin. Uzmanlık alanın: {st.session_state.current_subject}. Soruları adım adım ve anlaşılır biçimde çöz."
+
+            # Dosya Yüklendiyse İçeriğe Ekleme
+            if st.session_state.uploaded_file:
+                if st.session_state.uploaded_file.type == "application/pdf":
+                    reader = PdfReader(st.session_state.uploaded_file)
+                    pdf_text = ""
+                    for page in reader.pages:
+                        extracted = page.extract_text()
+                        if extracted:
+                            pdf_text += extracted + "\n"
+                    if pdf_text:
+                        contents.append(f"Yüklenen PDF İçeriği:\n{pdf_text}")
+                else:
+                    img = Image.open(st.session_state.uploaded_file)
+                    contents.append(img)
+
+            # Kullanıcı Sorusu
+            contents.append(prompt)
+
+            # Gemini API Çağrısı
+            response = st.session_state.gemini_client.models.generate_content(
                 model=st.session_state.selected_model,
-                subject=st.session_state.current_subject
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=sys_instruction
+                )
             )
 
+            answer = response.text
             st.session_state.messages.append({"role": "assistant", "content": answer})
             
             with st.chat_message("assistant"):
-                st.markdown(LatexNodes2Text().latex_to_text(answer))
+                st.markdown(answer)
 
-            # ====================== STREK SİSTEMİ (DÜZELTİLMİŞ) ======================
+            # Streak Mantığı
             if st.session_state.last_used_date != today:
                 st.session_state.streak += 1
                 st.session_state.last_used_date = today
@@ -125,8 +145,8 @@ with st.expander("📄 PDF veya Görsel Yükle"):
                 text_sample = reader.pages[0].extract_text()[:400]
                 if text_sample:
                     st.text_area("PDF'ten çıkarılan örnek metin:", text_sample, height=120)
-            except:
-                pass
+            except Exception:
+                st.error("PDF okuma hatası")
         else:
             image = Image.open(uploaded_file)
             st.image(image, caption="Yüklenen Görsel", width=400)
