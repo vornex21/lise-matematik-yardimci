@@ -57,7 +57,7 @@ with st.sidebar:
 # ====================== ANA EKRAN ======================
 col1, col2 = st.columns([4, 1])
 with col1:
-    st.title("🧠 Akıllı Matmatik Yardımcısı")
+    st.title("🧠 Akıllı Matematik Yardımcısı")
 with col2:
     if st.button("🌙" if st.session_state.dark_mode else "☀️", key="theme_btn"):
         st.session_state.dark_mode = not st.session_state.dark_mode
