@@ -23,6 +23,8 @@ if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 if "uploaded_file" not in st.session_state:
     st.session_state.uploaded_file = None
+if "current_summary" not in st.session_state:
+    st.session_state.current_summary = None
 
 today = date.today()
 
@@ -32,7 +34,7 @@ st.set_page_config(page_title="Ders Yardımcım - Akıllı Eğitim Asistanı", l
 if st.session_state.dark_mode:
     st.markdown("""<style>.stApp { background-color: #0f172a; color: #f3f4f6; }</style>""", unsafe_allow_html=True)
 
-# ====================== MÜFREDAT VE VERİ YAPISI ======================
+# ====================== MÜFREDAT VERİ YAPISI ======================
 CURRICULUM = {
     "İlkokul (1-4. Sınıf)": {
         "Matematik": ["Temel Dört İşlem", "Kesirler", "Zaman ve Ölçme", "Temel Geometri"],
@@ -113,25 +115,6 @@ is_selection_complete = (
     selected_subject != "-- Önce Ders Seçiniz --"
 )
 
-if is_selection_complete:
-    st.info(f"🎯 **Sınıf:** `{selected_grade}` | **Ders:** `{selected_subject}` | **Konu:** `{selected_topic}`")
-    
-    # HIZLI ARAÇLAR (Özet ve Test Butonları)
-    col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        generate_summary = st.button("📝 Konu Özeti Çıkar")
-    with col_btn2:
-        generate_quiz = st.button("🧪 Mini Test Oluştur (3 Soru)")
-else:
-    st.warning("⚠️ Lütfen sağ menüden **Sınıf**, **Ders** ve **Konu** seçimi yapınız.")
-    generate_summary = False
-    generate_quiz = False
-
-# Geçmiş Mesajlar
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
 # AI Sorgu Fonksiyonu
 def ask_gemini(prompt_text):
     sys_instruction = (
@@ -159,11 +142,51 @@ def ask_gemini(prompt_text):
     )
     return response.text
 
-# Hızlı Araç Tetiklemeleri
+# Seçim Durumu ve Hızlı Araçlar
+if is_selection_complete:
+    st.info(f"🎯 **Sınıf:** `{selected_grade}` | **Ders:** `{selected_subject}` | **Konu:** `{selected_topic}`")
+    
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("📝 Konu Özeti Çıkar"):
+            with st.spinner("Özet hazırlanıyor..."):
+                summary_prompt = (
+                    f"Bana '{selected_topic}' konusuyla ilgili {selected_grade} seviyesinde "
+                    f"şu 3 başlıktan oluşan akılda kalıcı bir ders özeti çıkar:\n"
+                    f"1. 📌 Temel Kavramlar ve Formüller\n"
+                    f"2. ⚠️ Sınavda En Çok Yapılan Hatalar / Tuzaklar\n"
+                    f"3. 💡 Altın İpuçları ve Taktikler"
+                )
+                st.session_state.current_summary = ask_gemini(summary_prompt)
+
+    with col_btn2:
+        generate_quiz = st.button("🧪 Mini Test Oluştur (3 Soru)")
+
+else:
+    st.warning("⚠️ Lütfen sağ menüden **Sınıf**, **Ders** ve **Konu** seçimi yapınız.")
+    generate_quiz = False
+
+# ====================== AÇILIR-KAPANIR ÖZET ALANI ======================
+if st.session_state.current_summary and is_selection_complete:
+    with st.expander(f"📌 {selected_topic} - Konu ÖzetiKartı (Okumak/Kapatmak İçin Tıklayın)", expanded=True):
+        st.markdown(st.session_state.current_summary)
+        
+        # İndirme Butonu
+        st.download_button(
+            label="📥 Özeti Not Olarak İndir (.txt)",
+            data=st.session_state.current_summary,
+            file_name=f"{selected_subject}_{selected_topic}_Ozeti.txt",
+            mime="text/plain"
+        )
+
+# Geçmiş Mesajlar
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Soru veya Test İşleme
 prompt_to_send = None
-if generate_summary:
-    prompt_to_send = f"Bana '{selected_topic}' konusuyla ilgili akılda kalıcı, sınavda en çok çıkan yerleri içeren kısa bir çalışma özeti hazırla."
-elif generate_quiz:
+if generate_quiz:
     prompt_to_send = f"Bana '{selected_topic}' konusuyla ilgili {selected_grade} seviyesine uygun 3 adet çoktan seçmeli soru hazırla. Cevap anahtarını en alta sakla."
 elif user_input := st.chat_input("Sorunuzu buraya yazın..."):
     if not is_selection_complete:
@@ -200,4 +223,5 @@ with st.expander("📄 Soru Fotoğrafı veya PDF Yükle"):
 if st.button("🗑️ Sohbeti Temizle"):
     st.session_state.messages = []
     st.session_state.uploaded_file = None
+    st.session_state.current_summary = None
     st.rerun()
