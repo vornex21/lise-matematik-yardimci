@@ -432,8 +432,8 @@ CURRICULUM = {
 with st.sidebar:
     st.title("🎓 Ders Yardımcım")
 
-    # 1. MODEL SEÇİMİ
-    model_options = ["gemini-2.5-flash", "gemini-2.5-pro"]
+    # 1. MODEL SEÇİMİ (Güncel gemini-3.8-flash modeli eklendi)
+    model_options = ["gemini-3.8-flash", "gemini-2.5-pro"]
     selected_model = st.selectbox("🤖 Yapay Zekâ Modeli", model_options, index=0)
 
     st.markdown("---")
@@ -474,7 +474,7 @@ is_selection_complete = (
     selected_subject != "-- Önce Ders Seçiniz --"
 )
 
-# AI Sorgu Fonksiyonu (Dinamik Model Seçimli)
+# AI Sorgu Fonksiyonu (Güncel Gemini Modeli)
 def ask_gemini(prompt_text):
     if "gemini_client" not in st.session_state:
         return "⚠️ API bağlantısı kurulamadı. Lütfen API anahtarınızı kontrol edin."
@@ -588,4 +588,3 @@ if st.button("🗑️ Sohbeti Temizle"):
     st.session_state.uploaded_file = None
     st.session_state.current_summary = None
     st.rerun()
-
