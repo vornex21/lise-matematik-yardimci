@@ -9,8 +9,11 @@ from PyPDF2 import PdfReader
 # ====================== GEMINI CLIENT ======================
 api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
-if "gemini_client" not in st.session_state and api_key:
-    st.session_state.gemini_client = genai.Client(api_key=api_key)
+if api_key:
+    if "gemini_client" not in st.session_state:
+        st.session_state.gemini_client = genai.Client(api_key=api_key)
+else:
+    st.error("🔑 API Anahtarı bulunamadı! Lütfen Streamlit Secrets alanına 'GEMINI_API_KEY' anahtarını ekleyin.")
 
 # ====================== SESSION STATE ======================
 if "streak" not in st.session_state:
@@ -465,8 +468,11 @@ is_selection_complete = (
     selected_subject != "-- Önce Ders Seçiniz --"
 )
 
-# AI Sorgu Fonksiyonu (Türkiye Yüzyılı Maarif Modeli ve MEB Müfredatına Uyumlu)
+# AI Sorgu Fonksiyonu (Hata Korumalı)
 def ask_gemini(prompt_text):
+    if "gemini_client" not in st.session_state:
+        return "⚠️ API bağlantısı kurulamadı. Lütfen API anahtarınızı kontrol edin."
+
     sys_instruction = (
         f"Sen 'Ders Yardımcım' platformunda görevli uzman bir öğretmen ve eğitim koçusun. "
         f"Öğrencinin okuduğu seviye: '{selected_grade}'. Ders: '{selected_subject}'. Konu: '{selected_topic}'. "
@@ -486,12 +492,15 @@ def ask_gemini(prompt_text):
 
     contents.append(prompt_text)
 
-    response = st.session_state.gemini_client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=contents,
-        config=types.GenerateContentConfig(system_instruction=sys_instruction)
-    )
-    return response.text
+    try:
+        response = st.session_state.gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(system_instruction=sys_instruction)
+        )
+        return response.text
+    except Exception as e:
+        return f"⚠️ Gemini API İsteği Başarısız Oldu: {str(e)}"
 
 # Seçim Durumu ve Hızlı Araçlar
 if is_selection_complete:
@@ -551,18 +560,15 @@ if prompt_to_send:
         st.markdown(prompt_to_send)
 
     with st.spinner("Ders Yardımcım yanıtlıyor..."):
-        try:
-            answer = ask_gemini(prompt_to_send)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-            with st.chat_message("assistant"):
-                st.markdown(answer)
+        answer = ask_gemini(prompt_to_send)
+        st.session_state.messages.append({"role": "assistant", "content": answer})
+        with st.chat_message("assistant"):
+            st.markdown(answer)
 
-            if st.session_state.last_used_date != today:
-                st.session_state.streak += 1
-                st.session_state.last_used_date = today
-                st.success("🔥 Streak'in arttı!")
-        except Exception as e:
-            st.error(f"Hata: {str(e)}")
+        if st.session_state.last_used_date != today and "⚠️" not in answer:
+            st.session_state.streak += 1
+            st.session_state.last_used_date = today
+            st.success("🔥 Streak'in arttı!")
 
 # Dosya Yükleme ve Temizleme
 with st.expander("📄 Soru Fotoğrafı veya PDF Yükle"):
