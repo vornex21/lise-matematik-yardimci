@@ -1,8 +1,3 @@
-Yine aynı hata oluşmuş: Kodu kopyalarken üstteki **Türkçe açıklama yazısını** da `app.py` dosyasının en başına yapıştırdığınız için Python bunu kod sanıp `SyntaxError` veriyor. `app.py` dosyasının 1. satırı doğrudan `import streamlit as st` ile başlamalıdır.
-
-Aşağıdaki siyah kod kutusunun sağ üst köşesindeki **"Copy"** butonuna basın. Ardından `app.py` dosyanızın içindeki **HER ŞEYİ SİLİP** doğrudan yapıştırın:
-
-```python
 import streamlit as st
 from PIL import Image
 from google import genai
@@ -581,5 +576,3 @@ if st.button("🗑️ Sohbeti Temizle"):
     st.session_state.uploaded_file = None
     st.session_state.current_summary = None
     st.rerun()
-
-```
