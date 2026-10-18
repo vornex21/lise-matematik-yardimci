@@ -70,4 +70,5 @@ CURRICULUM = {
             "Küresel Bağlantılar"
         ]
     },
-    "Ortaokul (5-7. S
+    "Ortaokul (5-7. Sınıf)": {
+        "
