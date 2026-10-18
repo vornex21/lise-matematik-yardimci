@@ -38,37 +38,67 @@ if st.session_state.dark_mode:
 CURRICULUM = {
     "İlkokul (1-4. Sınıf)": {
         "Matematik": [
-            "Doğal Sayılar ve Toplama-Çıkarma", 
-            "Çarpma ve Bölme İşlemleri", 
-            "Kesirler ve Zaman Ölçme", 
-            "Geometrik Cisimler ve Şekiller", 
-            "Uzunluk, Tartma ve Sıvı Ölçme", 
+            "Doğal Sayılar ve Toplama-Çıkarma",
+            "Çarpma ve Bölme İşlemleri",
+            "Kesirler ve Zaman Ölçme",
+            "Geometrik Cisimler ve Şekiller",
+            "Uzunluk, Tartma ve Sıvı Ölçme",
             "Veri Toplama ve Değerlendirme"
         ],
         "Türkçe": [
-            "Okuduğunu Anlama ve Yorumlama", 
-            "Sözcükte ve Cümlede Anlam", 
-            "Yazım Kuralları ve Noktalama İşaretleri", 
-            "Metin Türleri ve Şiir", 
+            "Okuduğunu Anlama ve Yorumlama",
+            "Sözcükte ve Cümlede Anlam",
+            "Yazım Kuralları ve Noktalama İşaretleri",
+            "Metin Türleri ve Şiir",
             "Görsel Okuma ve Grafikler"
         ],
         "Fen Bilimleri": [
-            "Yer Kabuğu ve Dünyamızın Yapısı", 
-            "Canlılar Dünyasına Yolculuk", 
-            "Kuvvetin Etkileri ve Hareket", 
-            "Maddenin Özellikleri ve Halleri", 
-            "Aydınlatma ve Ses Teknolojileri", 
-            "İnsan ve Çevre İlişkisi", 
+            "Yer Kabuğu ve Dünyamızın Yapısı",
+            "Canlılar Dünyasına Yolculuk",
+            "Kuvvetin Etkileri ve Hareket",
+            "Maddenin Özellikleri ve Halleri",
+            "Aydınlatma ve Ses Teknolojileri",
+            "İnsan ve Çevre İlişkisi",
             "Basit Elektrik Devreleri"
         ],
         "Sosyal Bilgiler": [
-            "Birey ve Toplum (Herkesin Bir Öyküsü Var)", 
-            "Kültür ve Miras (Ailem, Geçmişim)", 
-            "İnsanlar, Yerler ve Çevreler (Yaşadığımız Yer)", 
-            "Üretim, Tüketim ve Dağıtım", 
-            "Etkin Vatandaşlık ve Haklarımız", 
+            "Birey ve Toplum (Herkesin Bir Öyküsü Var)",
+            "Kültür ve Miras (Ailem, Geçmişim)",
+            "İnsanlar, Yerler ve Çevreler (Yaşadığımız Yer)",
+            "Üretim, Tüketim ve Dağıtım",
+            "Etkin Vatandaşlık ve Haklarımız",
             "Küresel Bağlantılar"
         ]
     },
     "Ortaokul (5-7. Sınıf)": {
-        "
+        "Matematik": [
+            "Doğal Sayılar ve Kesirlerle İşlemler",
+            "Ondalık Gösterim ve Yüzdeler",
+            "Tam Sayılar ve Cebirsel İfadeler",
+            "Oran ve Orantı",
+            "Doğrular, Açılar ve Çokgenler",
+            "Çember, Daire ve Alan Ölçme",
+            "Veri Analizi ve Veri İşleme"
+        ],
+        "Türkçe": [
+            "Sözcükte, Cümlede ve Paragrafta Anlam",
+            "Fiiller, Ek Fiil ve Fiilde Yapı",
+            "Söz Sanatları ve Metin Türleri",
+            "Yazım Kuralları ve Noktalama İşaretleri",
+            "Sözel Mantık ve Görsel Okuma"
+        ],
+        "Fen Bilimleri": [
+            "Güneş, Dünya ve Ay Sistemi",
+            "Hücre, Büyüme ve Bölünmeler",
+            "Kuvvet, İş ve Enerji Dönüşümleri",
+            "Maddenin Tanecikli Yapısı ve Isı",
+            "Işığın Yayılması, Yansıması ve Soğurulması",
+            "Canlılarda Üreme, Büyüme ve Gelişme",
+            "Elektrik Devreleri"
+        ],
+        "Sosyal Bilgiler": [
+            "Birey ve Toplum (Sosyal Rollerin Değişimi)",
+            "Kültür ve Miras (Tarihe Yolculuk)",
+            "İnsanlar, Yerler ve Çevreler (Türkiye Coğrafyası)",
+            "Bilim, Teknoloji ve Toplum",
+            "Üretim, Dağıtım ve
