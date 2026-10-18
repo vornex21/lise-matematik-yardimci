@@ -1,10 +1,3 @@
-Haklısın! Önceki sürümlerde `CURRICULUM` sözlüğünü genişletirken ve hata düzeltmeleri yaparken model seçimi butonunu sabit `gemini-2.5-flash` modeliyle değiştirmiştik.
-
-Yan menüye (Sidebar) kullanıcıların dilediği modeli seçebileceği bir **Yapay Zekâ Modeli Seçim Kutusu** yeniden eklendi. Artık öğrenciler ve kullanıcılar diledikleri Gemini modelini (`gemini-2.5-flash`, `gemini-2.5-pro` vb.) listeden seçerek sorgularını çalıştırabilirler.
-
-Aşağıdaki **eksiksiz ve düzeltilmiş `app.py**` kodunu doğrudan kopyalayıp dosyanızdaki **HER ŞEYİ SİLEREK** yapıştırabilirsiniz:
-
-```python
 import streamlit as st
 from PIL import Image
 from google import genai
