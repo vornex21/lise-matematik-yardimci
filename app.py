@@ -1,3 +1,10 @@
+Haklısın! Önceki sürümlerde `CURRICULUM` sözlüğünü genişletirken ve hata düzeltmeleri yaparken model seçimi butonunu sabit `gemini-2.5-flash` modeliyle değiştirmiştik.
+
+Yan menüye (Sidebar) kullanıcıların dilediği modeli seçebileceği bir **Yapay Zekâ Modeli Seçim Kutusu** yeniden eklendi. Artık öğrenciler ve kullanıcılar diledikleri Gemini modelini (`gemini-2.5-flash`, `gemini-2.5-pro` vb.) listeden seçerek sorgularını çalıştırabilirler.
+
+Aşağıdaki **eksiksiz ve düzeltilmiş `app.py**` kodunu doğrudan kopyalayıp dosyanızdaki **HER ŞEYİ SİLEREK** yapıştırabilirsiniz:
+
+```python
 import streamlit as st
 from PIL import Image
 from google import genai
@@ -303,7 +310,7 @@ CURRICULUM = {
         "Kimya": [
             "Modern Atom Teorisi ve Kuantum Sayıları",
             "Periyodik Sistem ve Özellikleri",
-            "Gazlar (Gaz Yasaları ve İideal Gaz)",
+            "Gazlar (Gaz Yasaları ve İdeal Gaz)",
             "Sıvı Çözeltiler ve Derişim Birimleri",
             "Kimyasal Tepkimelerde Enerji (Entalpi)",
             "Tepkime Hızları ve Kimyasal Denge",
@@ -383,3 +390,209 @@ CURRICULUM = {
         "Tarih": [
             "20. Yüzyıl Başlarında Osmanlı Devleti ve Dünya",
             "Milli Mücadele (Hazırlık, Cepheler ve Antlaşmalar)",
+            "Atatürkçülük ve Türk İnkılabı",
+            "İki Dünya Savaşı Arasındaki Dönemde Türkiye ve Dünya",
+            "II. Dünya Savaşı Sürecinde ve Sonrasında Türkiye",
+            "Soğuk Savaş Dönemi ve Toplumsal Değişmeler",
+            "Yumuşama Dönemi ve Küreselleşen Dünya"
+        ]
+    },
+    "Üniversite": {
+        "Matematik / Kalkülüs": [
+            "Limit, Süreklilik ve Türev Kuralları",
+            "Türev Uygulamaları (Grafik Çizimi, L'Hopital, Optimizasyon)",
+            "İntegral Teknikleri (Değişken Değiştirme, Kısmi İntegral, Basit Kesirler)",
+            "Belirli İntegral Uygulamaları (Alan, Hacim, Yay Uzunluğu)",
+            "Sonsuz Diziler ve Seriler (Kriter Testleri, Taylor/Maclaurin)",
+            "Çok Değişkenli Fonksiyonlar ve Kısmi Türev",
+            "Çift ve Üçlü İntegraller"
+        ],
+        "Lineer Cebir": [
+            "Lineer Denklem Sistemleri ve Gauss Eleme Yöntemi",
+            "Matrisler, İşlemler ve Matris Tersi",
+            "Determinant Özellikleri ve Cramer Kuralı",
+            "Vektör Uzayları ve Alt Uzaylar",
+            "Lineer Bağımsızlık, Taban (Baz) ve Boyut",
+            "Özdeğerler, Özvektörler ve Köşegenleştirme"
+        ],
+        "Fizik (Mekanik / Elektrik)": [
+            "Vektörler ve 1D/2D Kinematik Hareket",
+            "Newton Hareket Yasaları ve Sürtünme",
+            "İş, Kinetik/Potansiyel Enerji ve Korunum",
+            "Çizgisel Momentum ve Çarpışmalar",
+            "Coulomb Yasası ve Elektrik Alanı",
+            "Gauss Yasası ve Elektriksel Potansiyel",
+            "Kapasitans, Direnç ve DC Devreleri"
+        ],
+        "Programlama / Yazılım": [
+            "Algoritma Mantığı ve Değişkenler",
+            "Koşullu İfadeler (If-Else) ve Döngüler (For-While)",
+            "Fonksiyonlar ve Parametre Aktarımı",
+            "Diziler (Arrays) ve Metin İşlemleri (Strings)",
+            "Temel Veri Yapıları (Listeler, Sözlükler/Maps)",
+            "Nesne Yönelimli Programlama (OOP - Sınıf, Kalıtım)"
+        ]
+    }
+}
+
+# ====================== SAĞ MENÜ / SIDEBAR ======================
+with st.sidebar:
+    st.title("🎓 Ders Yardımcım")
+
+    # 1. MODEL SEÇİMİ
+    model_options = ["gemini-2.5-flash", "gemini-2.5-pro"]
+    selected_model = st.selectbox("🤖 Yapay Zekâ Modeli", model_options, index=0)
+
+    st.markdown("---")
+
+    # 2. SINIF SEÇİMİ
+    grade_options = ["-- Önce Sınıf Seçiniz --"] + list(CURRICULUM.keys())
+    selected_grade = st.selectbox("🏫 Sınıf Düzeyi", grade_options, index=0)
+
+    # 3. DERS SEÇİMİ
+    if selected_grade == "-- Önce Sınıf Seçiniz --":
+        selected_subject = st.selectbox("📚 Ders", ["-- Önce sınıf seçiniz --"], disabled=True)
+        selected_topic = st.selectbox("📖 Konu / Ünite", ["-- Önce ders seçiniz --"], disabled=True)
+    else:
+        subject_options = ["-- Önce Ders Seçiniz --"] + list(CURRICULUM[selected_grade].keys())
+        selected_subject = st.selectbox("📚 Ders", subject_options, index=0)
+
+        # 4. KONU SEÇİMİ
+        if selected_subject == "-- Önce Ders Seçiniz --":
+            selected_topic = st.selectbox("📖 Konu / Ünite", ["-- Önce ders seçiniz --"], disabled=True)
+        else:
+            topic_options = CURRICULUM[selected_grade][selected_subject]
+            selected_topic = st.selectbox("📖 Konu / Ünite", topic_options, index=0)
+
+    st.markdown("---")
+    st.metric("🔥 Streak", f"{st.session_state.streak} Gün", delta="bugün aktif" if st.session_state.last_used_date == today else None)
+
+# ====================== ANA EKRAN ======================
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.title("📚 Ders Yardımcım")
+with col2:
+    if st.button("🌙" if st.session_state.dark_mode else "☀️", key="theme_btn"):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
+
+is_selection_complete = (
+    selected_grade != "-- Önce Sınıf Seçiniz --" and 
+    selected_subject != "-- Önce Ders Seçiniz --"
+)
+
+# AI Sorgu Fonksiyonu (Dinamik Model Seçimli)
+def ask_gemini(prompt_text):
+    if "gemini_client" not in st.session_state:
+        return "⚠️ API bağlantısı kurulamadı. Lütfen API anahtarınızı kontrol edin."
+
+    sys_instruction = (
+        f"Sen 'Ders Yardımcım' platformunda görevli uzman bir öğretmen ve eğitim koçusun. "
+        f"Öğrencinin okuduğu seviye: '{selected_grade}'. Ders: '{selected_subject}'. Konu: '{selected_topic}'. "
+        f"Anlatım dilini, kavram seviyesini ve çözümlerini Türkiye Yüzyılı Maarif Modeli ve MEB güncel müfredat esaslarına tam uyumlu yap. "
+        f"Soruları ve özetleri adım adım, açık, motive edici ve anlaşılır bir dille anlat."
+    )
+    
+    contents = []
+    if st.session_state.uploaded_file:
+        if st.session_state.uploaded_file.type == "application/pdf":
+            reader = PdfReader(st.session_state.uploaded_file)
+            pdf_text = "".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            contents.append(f"Yüklenen Doküman İçeriği:\n{pdf_text}")
+        else:
+            img = Image.open(st.session_state.uploaded_file)
+            contents.append(img)
+
+    contents.append(prompt_text)
+
+    try:
+        response = st.session_state.gemini_client.models.generate_content(
+            model=selected_model,
+            contents=contents,
+            config=types.GenerateContentConfig(system_instruction=sys_instruction)
+        )
+        return response.text
+    except Exception as e:
+        return f"⚠️ Gemini API İsteği Başarısız Oldu: {str(e)}"
+
+# Seçim Durumu ve Hızlı Araçlar
+if is_selection_complete:
+    st.info(f"🎯 **Sınıf:** `{selected_grade}` | **Ders:** `{selected_subject}` | **Konu:** `{selected_topic}` | **Model:** `{selected_model}`")
+    
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("📝 Konu Özeti Çıkar"):
+            with st.spinner("Güncel MEB müfredatına göre özet hazırlanıyor..."):
+                summary_prompt = (
+                    f"Bana '{selected_topic}' konusuyla ilgili {selected_grade} seviyesinde "
+                    f"Türkiye Yüzyılı Maarif Modeli esaslarına uygun şu 3 başlıktan oluşan akılda kalıcı bir ders özeti çıkar:\n"
+                    f"1. 📌 Temel Kavramlar ve Formüller / Tanımlar\n"
+                    f"2. ⚠️ Sınavda En Çok Yapılan Hatalar ve Tuzaklar\n"
+                    f"3. 💡 Altın İpuçları ve Pratik Taktikler"
+                )
+                st.session_state.current_summary = ask_gemini(summary_prompt)
+
+    with col_btn2:
+        generate_quiz = st.button("🧪 Mini Test Oluştur (3 Soru)")
+
+else:
+    st.warning("⚠️ Lütfen sağ menüden **Sınıf**, **Ders** ve **Konu** seçimi yapınız.")
+    generate_quiz = False
+
+# ====================== AÇILIR-KAPANIR ÖZET ALANI ======================
+if st.session_state.current_summary and is_selection_complete:
+    with st.expander(f"📌 {selected_topic} - Konu Özeti Kartı (Okumak/Kapatmak İçin Tıklayın)", expanded=True):
+        st.markdown(st.session_state.current_summary)
+        
+        # İndirme Butonu
+        st.download_button(
+            label="📥 Özeti Not Olarak İndir (.txt)",
+            data=st.session_state.current_summary,
+            file_name=f"{selected_subject}_{selected_topic}_Ozeti.txt",
+            mime="text/plain"
+        )
+
+# Geçmiş Mesajlar
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Soru veya Test İşleme
+prompt_to_send = None
+if generate_quiz:
+    prompt_to_send = f"Bana '{selected_topic}' konusuyla ilgili {selected_grade} seviyesine uygun güncel müfredata göre 3 adet çoktan seçmeli soru hazırla. Cevap anahtarını ve detaylı çözümleri en alta ekle."
+elif user_input := st.chat_input("Sorunuzu buraya yazın..."):
+    if not is_selection_complete:
+        st.error("Lütfen önce sağ menüden seçim yapın!")
+    else:
+        prompt_to_send = user_input
+
+if prompt_to_send:
+    st.session_state.messages.append({"role": "user", "content": prompt_to_send})
+    with st.chat_message("user"):
+        st.markdown(prompt_to_send)
+
+    with st.spinner("Ders Yardımcım yanıtlıyor..."):
+        answer = ask_gemini(prompt_to_send)
+        st.session_state.messages.append({"role": "assistant", "content": answer})
+        with st.chat_message("assistant"):
+            st.markdown(answer)
+
+        if st.session_state.last_used_date != today and "⚠️" not in answer:
+            st.session_state.streak += 1
+            st.session_state.last_used_date = today
+            st.success("🔥 Streak'in arttı!")
+
+# Dosya Yükleme ve Temizleme
+with st.expander("📄 Soru Fotoğrafı veya PDF Yükle"):
+    uploaded_file = st.file_uploader("Dosya Seçin", type=["png", "jpg", "jpeg", "pdf"])
+    if uploaded_file:
+        st.session_state.uploaded_file = uploaded_file
+        st.success("✅ Dosya eklendi")
+
+if st.button("🗑️ Sohbeti Temizle"):
+    st.session_state.messages = []
+    st.session_state.uploaded_file = None
+    st.session_state.current_summary = None
+    st.rerun()
+
