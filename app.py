@@ -1,8 +1,6 @@
-Yine kod bloğunun dışındaki Türkçe açıklama yazısı koda dahil edilmiş. `app.py` dosyasının içinde **sadece Python kodu** olmalıdır; açıklama cümleleri Python tarafından hata olarak algılanır.
+Yine aynı hata oluşmuş: Kodu kopyalarken üstteki **Türkçe açıklama yazısını** da `app.py` dosyasının en başına yapıştırdığınız için Python bunu kod sanıp `SyntaxError` veriyor. `app.py` dosyasının 1. satırı doğrudan `import streamlit as st` ile başlamalıdır.
 
-Hiçbir açıklama cümlesi içermeyen, tırnakları ve parantezleri eksiksiz kontrol edilmiş **tam `app.py` kodu** aşağıdadır.
-
-Kopyalamak için sağ üstteki **"Copy"** butonuna tıkla ve `app.py` dosyasındaki **her şeyi silip** doğrudan yapıştır:
+Aşağıdaki siyah kod kutusunun sağ üst köşesindeki **"Copy"** butonuna basın. Ardından `app.py` dosyanızın içindeki **HER ŞEYİ SİLİP** doğrudan yapıştırın:
 
 ```python
 import streamlit as st
