@@ -1,8 +1,8 @@
-181. satırdaki `SyntaxError: '[' was never closed` hatası, liste tanımının kapanış parantezinin `]` kopyalama/yapıştırma esnasında eksik kalmasından veya sözlük parantezlerinin kaymasından kaynaklanır.
+Yine kod bloğunun dışındaki Türkçe açıklama yazısı koda dahil edilmiş. `app.py` dosyasının içinde **sadece Python kodu** olmalıdır; açıklama cümleleri Python tarafından hata olarak algılanır.
 
-Aşağıdaki kod bloğunda tüm sözlükler, listeler (`[]`) ve tırnak işaretleri tek tek kontrol edilerek kapatılmıştır.
+Hiçbir açıklama cümlesi içermeyen, tırnakları ve parantezleri eksiksiz kontrol edilmiş **tam `app.py` kodu** aşağıdadır.
 
-Kodu kopyalamak için kutunun sağ üstündeki **"Copy"** butonuna basıp `app.py` dosyanızın **tamamını** silip yapıştırabilirsiniz:
+Kopyalamak için sağ üstteki **"Copy"** butonuna tıkla ve `app.py` dosyasındaki **her şeyi silip** doğrudan yapıştır:
 
 ```python
 import streamlit as st
